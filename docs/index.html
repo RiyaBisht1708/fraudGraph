@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080d18">
+  <meta name="description" content="FraudGraph is a research project exploring graph-based financial fraud detection with heterogeneous graphs and graph neural networks.">
+  <title>FraudGraph — Graph-Based Financial Fraud Detection</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #080d18;
+      --surface: #0e1524;
+      --surface-raised: #121b2c;
+      --line: rgba(165, 184, 220, .13);
+      --muted: #8e9bb1;
+      --text: #edf2fb;
+      --blue: #70a7ff;
+      --violet: #ad91ff;
+      --mint: #78dfc1;
+      --amber: #f0c77d;
+      --radius: 18px;
+      --max: 1160px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 90px; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(ellipse at 76% 5%, rgba(80, 77, 193, .15), transparent 34rem),
+        radial-gradient(ellipse at 5% 29%, rgba(40, 116, 190, .10), transparent 30rem),
+        var(--bg);
+      color: var(--text);
+      font: 16px/1.65 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; }
+    button { font: inherit; }
+    img, video { display: block; max-width: 100%; }
+    :focus-visible { outline: 2px solid var(--blue); outline-offset: 4px; }
+    .skip-link {
+      position: absolute; z-index: 20; top: 8px; left: 8px; transform: translateY(-160%);
+      border-radius: 8px; padding: 9px 14px; background: white; color: #080d18;
+    }
+    .skip-link:focus { transform: translateY(0); }
+    .wrap { width: min(calc(100% - 48px), var(--max)); margin-inline: auto; }
+    .topbar {
+      position: sticky; z-index: 10; top: 0; border-bottom: 1px solid rgba(165,184,220,.09);
+      background: rgba(8,13,24,.82); backdrop-filter: blur(18px);
+    }
+    .nav { min-height: 70px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+    .brand { display: inline-flex; gap: 11px; align-items: center; text-decoration: none; font-weight: 720; letter-spacing: -.03em; }
+    .brand-mark {
+      width: 31px; height: 31px; display: grid; place-items: center; border: 1px solid rgba(112,167,255,.38);
+      border-radius: 10px; background: linear-gradient(145deg, rgba(112,167,255,.22), rgba(173,145,255,.1));
+      color: #a9c8ff;
+    }
+    .brand-mark svg { width: 19px; }
+    .nav-links { display: flex; align-items: center; gap: 26px; }
+    .nav-links a { color: #aab6c9; font-size: 13px; text-decoration: none; transition: color .18s ease; }
+    .nav-links a:hover { color: white; }
+    .nav-links .repo-link { color: var(--text); border: 1px solid var(--line); border-radius: 9px; padding: 7px 12px; }
+
+    .hero { position: relative; overflow: hidden; padding: 91px 0 84px; border-bottom: 1px solid rgba(165,184,220,.08); }
+    .hero-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(310px, .76fr); align-items: center; gap: 50px; }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 9px; color: #adc8f6; text-transform: uppercase;
+      font-size: 11px; font-weight: 700; letter-spacing: .16em;
+    }
+    .eyebrow::before { content: ""; width: 19px; height: 1px; background: linear-gradient(90deg, var(--blue), var(--violet)); }
+    h1 { margin: 20px 0 3px; font-size: clamp(54px, 8vw, 88px); line-height: .98; letter-spacing: -.075em; font-weight: 740; }
+    .hero h2 { margin: 15px 0 16px; color: #c4d2e7; font-size: clamp(19px, 2.4vw, 25px); letter-spacing: -.035em; font-weight: 510; }
+    .hero-copy { max-width: 650px; color: #a3b0c5; font-size: 16px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 29px; }
+    .button {
+      display: inline-flex; min-height: 45px; align-items: center; justify-content: center; gap: 9px;
+      border: 1px solid var(--line); border-radius: 10px; padding: 0 16px; text-decoration: none; font-size: 13px; font-weight: 650;
+      transition: transform .18s ease, border-color .18s ease, background .18s ease;
+    }
+    .button:hover { transform: translateY(-2px); border-color: rgba(145,177,255,.5); }
+    .button-primary { border-color: transparent; background: linear-gradient(110deg, #568ff0, #8971e8); color: #fff; box-shadow: 0 10px 28px rgba(77,104,219,.2); }
+    .button-secondary { background: rgba(255,255,255,.025); color: #d7e0ef; }
+    .button svg { width: 15px; height: 15px; }
+    .hero-note { display: flex; align-items: center; gap: 9px; margin-top: 25px; color: #8492a8; font-size: 12px; }
+    .hero-note span { width: 7px; height: 7px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 12px rgba(120,223,193,.5); }
+
+    .graph-panel {
+      position: relative; min-height: 350px; overflow: hidden; display: grid; place-items: center;
+      border: 1px solid rgba(147,170,213,.16); border-radius: 24px;
+      background: linear-gradient(145deg, rgba(27,39,65,.72), rgba(13,20,34,.48));
+      box-shadow: 0 28px 80px rgba(0,0,0,.24), inset 0 1px rgba(255,255,255,.035);
+    }
+    .graph-panel::before, .graph-panel::after { content: ""; position: absolute; border: 1px solid rgba(111,153,232,.12); border-radius: 50%; }
+    .graph-panel::before { width: 260px; height: 260px; }
+    .graph-panel::after { width: 355px; height: 355px; }
+    .graph-art { position: relative; z-index: 1; width: min(94%, 420px); }
+    .graph-art .edge { stroke: #536e9f; stroke-opacity: .55; stroke-width: 1.3; }
+    .graph-art .edge-hot { stroke: #a28bff; stroke-opacity: .8; stroke-width: 1.6; }
+    .graph-art .node { stroke: rgba(231,239,255,.7); stroke-width: 1.4; }
+    .graph-art .node-tx { fill: #629ef0; }
+    .graph-art .node-card { fill: #aa8af4; }
+    .graph-art .node-device { fill: #67cdb8; }
+    .graph-art .node-merchant { fill: #e2ba76; }
+    .graph-label {
+      position: absolute; z-index: 2; border: 1px solid rgba(156,178,218,.17); border-radius: 7px;
+      padding: 4px 8px; color: #b6c4d9; background: rgba(10,16,29,.77); font: 10px ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .graph-label.l1 { top: 20%; left: 8%; }
+    .graph-label.l2 { top: 18%; right: 9%; }
+    .graph-label.l3 { bottom: 18%; left: 11%; }
+    .graph-label.l4 { right: 8%; bottom: 20%; }
+    .hero-meta { display: flex; gap: 22px; margin-top: 28px; color: #8f9eb5; font-size: 11px; }
+    .hero-meta span { display: flex; align-items: center; gap: 7px; }
+    .hero-meta i { width: 6px; height: 6px; border-radius: 50%; background: #7489aa; }
+
+    section { padding: 88px 0; }
+    .section-heading { max-width: 700px; margin-bottom: 34px; }
+    .section-heading h2 { margin: 11px 0 10px; font-size: clamp(30px, 4vw, 43px); letter-spacing: -.055em; line-height: 1.12; }
+    .section-heading p { max-width: 650px; margin: 0; color: var(--muted); font-size: 15px; }
+    .section-kicker { color: var(--blue); font-size: 11px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; }
+    .problem-section { border-bottom: 1px solid rgba(165,184,220,.08); }
+    .problem-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .problem-card, .architecture-card, .metric-card, .status-card, .research-card, .stack-card {
+      border: 1px solid var(--line); border-radius: var(--radius); background: linear-gradient(145deg, rgba(19,29,47,.88), rgba(13,20,33,.88));
+    }
+    .problem-card { min-height: 210px; padding: 25px; }
+    .problem-card .number { color: #7688a7; font: 12px ui-monospace, monospace; }
+    .problem-card h3 { margin: 28px 0 8px; font-size: 19px; letter-spacing: -.025em; }
+    .problem-card p { margin: 0; max-width: 480px; color: #9aa8bd; font-size: 14px; }
+    .problem-card.graph-card { background: linear-gradient(135deg, rgba(59,76,145,.24), rgba(21,29,49,.9) 60%); }
+
+    .architecture { border-bottom: 1px solid rgba(165,184,220,.08); }
+    .pipeline {
+      display: grid; grid-template-columns: repeat(6, minmax(0,1fr)); gap: 10px; margin: 37px 0 17px;
+      align-items: stretch;
+    }
+    .pipeline-step {
+      position: relative; min-height: 131px; padding: 17px 14px 14px; border: 1px solid var(--line); border-radius: 14px;
+      background: rgba(16,24,39,.84);
+    }
+    .pipeline-step:not(:last-child)::after {
+      content: "›"; position: absolute; z-index: 2; right: -11px; top: 48px; color: #8899bb; font-size: 20px;
+    }
+    .step-number { color: #7385a1; font: 10px ui-monospace, monospace; }
+    .step-icon { width: 23px; height: 23px; margin: 13px 0 10px; color: #9fc2ff; }
+    .pipeline-step h3 { margin: 0; font-size: 12px; line-height: 1.45; font-weight: 620; }
+    .arch-details { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 22px; }
+    .architecture-card { padding: 20px; }
+    .architecture-card h3 { margin: 0 0 7px; font-size: 14px; }
+    .architecture-card p { margin: 0; color: #9ba9bd; font-size: 12px; line-height: 1.7; }
+    .architecture-card strong { color: #dce8ff; font-weight: 600; }
+    .architecture-note { margin: 17px 2px 0; color: #7f8ca2; font-size: 11px; }
+
+    .metrics-section { border-bottom: 1px solid rgba(165,184,220,.08); background: linear-gradient(180deg, rgba(13,20,33,.28), transparent); }
+    .metrics-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, .85fr); gap: 18px; align-items: stretch; }
+    .metric-card { padding: 24px; }
+    .metric-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 24px; }
+    .metric-top h3 { margin: 0; font-size: 16px; }
+    .metric-top p { margin: 4px 0 0; color: #8290a6; font-size: 11px; }
+    .test-badge { border: 1px solid rgba(120,223,193,.22); border-radius: 999px; padding: 5px 8px; color: #8de0c8; background: rgba(71,170,141,.08); font-size: 9px; white-space: nowrap; }
+    .metric-tabs { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 25px; }
+    .metric-tab {
+      cursor: pointer; border: 1px solid rgba(154,174,210,.16); border-radius: 8px; padding: 7px 10px;
+      background: transparent; color: #96a4b9; font-size: 10px; transition: .18s ease;
+    }
+    .metric-tab:hover, .metric-tab[aria-pressed="true"] { border-color: rgba(124,160,239,.48); background: rgba(82,119,204,.16); color: #e1eaff; }
+    .chart { display: grid; gap: 19px; }
+    .chart-row { display: grid; grid-template-columns: minmax(106px, 1.05fr) minmax(0, 2fr) 60px; align-items: center; gap: 12px; }
+    .chart-name { color: #b6c2d5; font-size: 11px; line-height: 1.35; }
+    .chart-track { height: 9px; overflow: hidden; border-radius: 99px; background: rgba(138,156,187,.11); }
+    .chart-fill { height: 100%; width: var(--value); border-radius: inherit; background: linear-gradient(90deg, #528ce9, #a18bff); transition: width .45s cubic-bezier(.2,.8,.2,1); }
+    .chart-row:first-child .chart-fill { background: linear-gradient(90deg, #68d0b6, #79a8ff); }
+    .chart-value { color: #e3eaf5; text-align: right; font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .chart-axis { display: flex; justify-content: space-between; margin: 8px 72px 0 126px; color: #66748c; font: 9px ui-monospace, monospace; }
+    .metric-interpretation { display: flex; flex-direction: column; justify-content: space-between; padding: 24px; }
+    .metric-interpretation .callout-mark { color: var(--violet); font-size: 22px; line-height: 1; }
+    .metric-interpretation h3 { margin: 17px 0 9px; font-size: 20px; letter-spacing: -.035em; }
+    .metric-interpretation p { margin: 0; color: #9aa8bd; font-size: 13px; }
+    .metric-interpretation .selection { margin-top: 25px; padding: 14px; border-left: 2px solid var(--violet); border-radius: 0 9px 9px 0; background: rgba(155,132,240,.08); color: #b9c5d8; font-size: 11px; }
+    .metric-table-wrap { margin-top: 17px; overflow-x: auto; border: 1px solid var(--line); border-radius: 13px; }
+    .metric-table { width: 100%; border-collapse: collapse; min-width: 650px; text-align: left; }
+    .metric-table th, .metric-table td { padding: 12px 15px; border-bottom: 1px solid rgba(165,184,220,.09); }
+    .metric-table tr:last-child td { border-bottom: 0; }
+    .metric-table th { color: #8795aa; background: rgba(255,255,255,.018); font-size: 10px; font-weight: 600; }
+    .metric-table td { color: #d2dced; font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .metric-table td:first-child { font: 12px ui-sans-serif, system-ui, sans-serif; font-weight: 600; }
+    .metric-caption { margin: 10px 2px 0; color: #76849a; font-size: 10px; }
+
+    .media-section { border-bottom: 1px solid rgba(165,184,220,.08); }
+    .media-grid { display: grid; grid-template-columns: 1.2fr .8fr; align-items: start; gap: 18px; }
+    .media-frame { overflow: hidden; border: 1px solid rgba(157,178,217,.16); border-radius: 15px; background: #05080e; box-shadow: 0 20px 55px rgba(0,0,0,.22); }
+    .media-frame img { width: 100%; height: auto; }
+    .media-frame video { width: 100%; aspect-ratio: 16/9; background: #05080e; }
+    .media-caption { padding: 13px 15px; border-top: 1px solid rgba(157,178,217,.11); color: #8d9bb1; font-size: 11px; }
+    .media-caption strong { color: #dbe5f4; font-weight: 600; }
+    .demo-column .section-heading { margin-bottom: 22px; }
+
+    .status-section { border-bottom: 1px solid rgba(165,184,220,.08); }
+    .status-card { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 18px; padding: 24px; }
+    .status-main { display: flex; align-items: flex-start; gap: 13px; }
+    .status-icon { flex: 0 0 34px; width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid rgba(240,199,125,.24); border-radius: 10px; color: var(--amber); background: rgba(240,199,125,.07); }
+    .status-icon svg { width: 17px; }
+    .status-card h3 { margin: 0 0 5px; font-size: 15px; }
+    .status-card p { margin: 0; max-width: 750px; color: #98a6bb; font-size: 12px; }
+    .status-label { border: 1px solid rgba(240,199,125,.23); border-radius: 999px; padding: 7px 10px; color: #f0ca88; background: rgba(240,199,125,.07); font-size: 10px; white-space: nowrap; }
+
+    .research-section { border-bottom: 1px solid rgba(165,184,220,.08); }
+    .research-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .research-card { display: flex; gap: 16px; padding: 20px; }
+    .research-index { flex: 0 0 28px; color: #829fda; font: 12px ui-monospace, monospace; }
+    .research-card h3 { margin: 0 0 6px; font-size: 14px; }
+    .research-card p { margin: 0; color: #96a4b9; font-size: 12px; }
+    .stack-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 16px; }
+    .stack-card { padding: 23px; }
+    .stack-card h3 { margin: 0 0 17px; font-size: 14px; }
+    .stack-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    .stack-tag { border: 1px solid rgba(150,171,211,.16); border-radius: 8px; padding: 7px 10px; color: #b9c7dc; background: rgba(255,255,255,.025); font-size: 11px; }
+    .stack-note { margin: 13px 0 0; color: #79879d; font-size: 10px; }
+    .footer { padding: 31px 0; }
+    .footer-inner { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .footer-copy { color: #7f8ca1; font-size: 11px; }
+    .footer-copy strong { color: #ced8e7; font-weight: 600; }
+    .footer-link { display: inline-flex; align-items: center; gap: 8px; color: #a9c5f6; font-size: 11px; text-decoration: none; }
+    .footer-link:hover { color: #fff; }
+    .footer-link svg { width: 15px; }
+
+    @media (max-width: 900px) {
+      .hero-grid { grid-template-columns: 1fr .76fr; gap: 26px; }
+      .graph-panel { min-height: 300px; }
+      .pipeline { grid-template-columns: repeat(3, 1fr); }
+      .pipeline-step:nth-child(3)::after { display: none; }
+      .metrics-layout { grid-template-columns: 1fr; }
+      .metric-interpretation { min-height: 0; }
+      .metric-interpretation .selection { margin-top: 14px; }
+    }
+    @media (max-width: 650px) {
+      .wrap { width: min(calc(100% - 34px), var(--max)); }
+      .nav { min-height: 62px; }
+      .nav-links { gap: 14px; }
+      .nav-links a { font-size: 11px; }
+      .nav-links a:nth-child(2), .nav-links a:nth-child(3) { display: none; }
+      .nav-links .repo-link { padding: 6px 9px; }
+      .hero { padding: 62px 0 57px; }
+      .hero-grid { grid-template-columns: 1fr; gap: 31px; }
+      .hero-copy { font-size: 14px; }
+      .graph-panel { min-height: 280px; }
+      .hero-meta { gap: 13px; flex-wrap: wrap; }
+      section { padding: 65px 0; }
+      .problem-grid, .arch-details, .media-grid, .research-grid, .stack-grid { grid-template-columns: 1fr; }
+      .problem-card { min-height: 180px; }
+      .problem-card h3 { margin-top: 21px; }
+      .pipeline { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+      .pipeline-step:nth-child(3)::after { display: block; }
+      .pipeline-step:nth-child(2n)::after { display: none; }
+      .pipeline-step { min-height: 122px; }
+      .metric-card, .metric-interpretation { padding: 18px; }
+      .chart-row { grid-template-columns: 93px minmax(0, 1fr) 54px; gap: 8px; }
+      .chart-axis { margin-left: 101px; margin-right: 62px; }
+      .status-card { grid-template-columns: 1fr; }
+      .status-label { justify-self: start; margin-left: 47px; }
+      .footer-inner { align-items: flex-start; flex-direction: column; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="topbar">
+    <nav class="nav wrap" aria-label="Main navigation">
+      <a class="brand" href="#" aria-label="FraudGraph home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M5 7.5 12 4l7 3.5v9L12 20l-7-3.5v-9Z" stroke="currentColor" stroke-width="1.5"/><path d="m5.5 8 6.5 3.5L18.5 8M12 12v7.5" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="11.5" r="1.2" fill="currentColor"/></svg>
+        </span>
+        FraudGraph
+      </a>
+      <div class="nav-links">
+        <a href="#research">Research</a>
+        <a href="#results">Results</a>
+        <a href="#demo">Demo</a>
+        <a class="repo-link" href="https://github.com/RiyaBisht1708/fraudGraph" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+      </div>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="wrap hero-grid">
+        <div>
+          <div class="eyebrow">Research project · Financial risk</div>
+          <h1 id="hero-title">FraudGraph</h1>
+          <h2>Graph-Based Financial Fraud Detection</h2>
+          <p class="hero-copy">A transaction is more than a row. FraudGraph models the relationships between transactions, cards, merchants, and devices as a heterogeneous graph—giving fraud analysis a way to reason about connected entities and shared behavioral context.</p>
+          <div class="actions">
+            <a class="button button-primary" href="#research">Explore the research
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10h11m-4-4 4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+            <a class="button button-secondary" href="#demo">
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m7 5 8 5-8 5V5Z" fill="currentColor"/></svg>
+              View demonstration
+            </a>
+          </div>
+          <div class="hero-note"><span aria-hidden="true"></span> Research prototype · Public inference is not deployed</div>
+          <div class="hero-meta" aria-label="Project attributes"><span><i></i> Heterogeneous graph</span><span><i></i> Temporal evaluation</span><span><i></i> Explainable scoring</span></div>
+        </div>
+        <div class="graph-panel" aria-label="Illustration of connected transaction, card, merchant, and device nodes">
+          <span class="graph-label l1">transaction</span><span class="graph-label l2">card</span>
+          <span class="graph-label l3">merchant</span><span class="graph-label l4">device</span>
+          <svg class="graph-art" viewBox="0 0 420 300" role="img" aria-labelledby="graph-title graph-desc">
+            <title id="graph-title">Connected financial entities</title>
+            <desc id="graph-desc">Transaction nodes connect to cards, merchants, and devices, with a highlighted relation between transactions.</desc>
+            <g fill="none">
+              <path class="edge" d="M90 74 181 105M90 74 135 205M181 105 273 66M181 105 279 174M135 205 225 238M135 205 279 174M273 66 340 117M279 174 340 117M279 174 225 238M181 105 225 238M90 74 279 174"/>
+              <path class="edge-hot" d="M181 105 279 174M135 205 225 238"/>
+            </g>
+            <g>
+              <circle class="node node-tx" cx="90" cy="74" r="9"/><circle class="node node-tx" cx="181" cy="105" r="11"/>
+              <circle class="node node-tx" cx="279" cy="174" r="10"/><circle class="node node-tx" cx="135" cy="205" r="8"/>
+              <circle class="node node-tx" cx="225" cy="238" r="8"/><circle class="node node-card" cx="273" cy="66" r="12"/>
+              <circle class="node node-card" cx="340" cy="117" r="10"/><circle class="node node-device" cx="90" cy="150" r="10"/>
+              <circle class="node node-device" cx="340" cy="228" r="11"/><circle class="node node-merchant" cx="70" cy="248" r="9"/>
+              <circle class="node node-merchant" cx="208" cy="52" r="8"/>
+            </g>
+            <g fill="none" stroke="#60749c" stroke-opacity=".48" stroke-width="1.2">
+              <path d="M90 74 90 150M135 205 70 248M181 105 208 52M279 174 340 228M225 238 340 228"/>
+            </g>
+            <circle cx="181" cy="105" r="20" fill="none" stroke="#78a8ff" stroke-opacity=".18"/>
+            <circle cx="279" cy="174" r="19" fill="none" stroke="#ad91ff" stroke-opacity=".2"/>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <section class="problem-section" id="problem" aria-labelledby="problem-title">
+      <div class="wrap">
+        <div class="section-heading">
+          <div class="section-kicker">01 · Motivation</div>
+          <h2 id="problem-title">Fraud rarely happens in isolation.</h2>
+          <p>Row-by-row signals can miss the shared entities and repeated connections that make a series of transactions meaningful.</p>
+        </div>
+        <div class="problem-grid">
+          <article class="problem-card">
+            <div class="number">THE LIMITATION</div>
+            <h3>Transactions viewed one at a time</h3>
+            <p>A transaction-level model evaluates the features in one row. Connections—such as a card appearing across transactions or an entity recurring across activity—are not explicit in that view.</p>
+          </article>
+          <article class="problem-card graph-card">
+            <div class="number">THE GRAPH VIEW</div>
+            <h3>Entities become context</h3>
+            <p>A heterogeneous graph represents transactions alongside cards, merchants, and devices. Message passing can use linked neighborhood structure as part of the fraud signal, rather than treating each event as disconnected.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="architecture" id="architecture" aria-labelledby="architecture-title">
+      <div class="wrap">
+        <div class="section-heading">
+          <div class="section-kicker">02 · System architecture</div>
+          <h2 id="architecture-title">From event stream to reasoned score.</h2>
+          <p>The pipeline spans offline feature and graph preparation, model selection, then a locally tested serving path.</p>
+        </div>
+        <div class="pipeline" aria-label="Transaction data flows through feature engineering, heterogeneous graph construction, graph neural network, fraud scoring, and explainability">
+          <article class="pipeline-step"><div class="step-number">01 / INPUT</div><svg class="step-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6.5 12 3l8 3.5v11L12 21l-8-3.5v-11Z" stroke="currentColor" stroke-width="1.4"/><path d="M4.5 7 12 10.5 19.5 7M12 10.5v10" stroke="currentColor" stroke-width="1.4"/></svg><h3>Transaction data</h3></article>
+          <article class="pipeline-step"><div class="step-number">02 / PREPARE</div><svg class="step-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6h16M7 12h10m-7 6h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="8" cy="6" r="2" fill="#121b2c" stroke="currentColor" stroke-width="1.4"/><circle cx="15" cy="12" r="2" fill="#121b2c" stroke="currentColor" stroke-width="1.4"/></svg><h3>Feature engineering</h3></article>
+          <article class="pipeline-step"><div class="step-number">03 / CONNECT</div><svg class="step-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="5" cy="12" r="2.2" stroke="currentColor" stroke-width="1.5"/><circle cx="18.5" cy="5" r="2.2" stroke="currentColor" stroke-width="1.5"/><circle cx="18.5" cy="19" r="2.2" stroke="currentColor" stroke-width="1.5"/><path d="m7 11 9.5-5M7 13l9.5 5" stroke="currentColor" stroke-width="1.5"/></svg><h3>Heterogeneous graph</h3></article>
+          <article class="pipeline-step"><div class="step-number">04 / LEARN</div><svg class="step-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="5" r="2" stroke="currentColor" stroke-width="1.4"/><circle cx="6" cy="18" r="2" stroke="currentColor" stroke-width="1.4"/><circle cx="18" cy="18" r="2" stroke="currentColor" stroke-width="1.4"/><path d="m11 7-4 9m6-9 4 9m-9 2h10" stroke="currentColor" stroke-width="1.4"/></svg><h3>Graph neural network</h3></article>
+          <article class="pipeline-step"><div class="step-number">05 / SCORE</div><svg class="step-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 19V9m7 10V5m7 14v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M3 21h18" stroke="currentColor" stroke-width="1.3"/></svg><h3>Fraud scoring</h3></article>
+          <article class="pipeline-step"><div class="step-number">06 / EXPLAIN</div><svg class="step-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3.5a7 7 0 0 0-4 12.75c.8.55 1 1.2 1 1.75h6c0-.55.2-1.2 1-1.75a7 7 0 0 0-4-12.75Z" stroke="currentColor" stroke-width="1.4"/><path d="M9.5 21h5m-4.5-3h4m-2-9v5m-2.3-3.1 2.3 1.2 2.3-1.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg><h3>Explainability</h3></article>
+        </div>
+        <div class="arch-details">
+          <article class="architecture-card"><h3>Graph construction</h3><p>Transactions connect to card, merchant, and device entities, with temporal velocity-cluster edges. <strong>PyTorch Geometric</strong> represents the heterogeneous graph; <strong>NetworkX</strong> is a graph-prototyping reference, not a dependency in the current implementation.</p></article>
+          <article class="architecture-card"><h3>Modeling &amp; baselines</h3><p><strong>GraphSAGE</strong> models neighborhood information; hybrid GNN and <strong>XGBoost</strong> baselines are compared on a temporally held-out test set. PureSAGE is the selected inference architecture.</p></article>
+          <article class="architecture-card"><h3>Local serving path</h3><p><strong>FastAPI</strong> receives scoring requests, while <strong>Redis</strong> maintains rolling transaction context and Kafka carries stream events. The inference service has been tested locally, not deployed as a public API.</p></article>
+        </div>
+        <p class="architecture-note">Offline graph construction and training artifacts are separate from the local serving stack. This research prototype is not represented as a production deployment.</p>
+      </div>
+    </section>
+
+    <section class="metrics-section" id="results" aria-labelledby="results-title">
+      <div class="wrap">
+        <div class="section-heading">
+          <div class="section-kicker">03 · Held-out evaluation</div>
+          <h2 id="results-title">Model comparison, with the full picture.</h2>
+          <p>Reported test metrics are shown as supplied. Select a metric to compare models on a shared 0–1 scale.</p>
+        </div>
+        <div class="metrics-layout">
+          <div class="metric-card">
+            <div class="metric-top">
+              <div><h3>Test-set metric comparison</h3><p>Four evaluated architectures · higher is better</p></div>
+              <span class="test-badge">HELD-OUT TEST</span>
+            </div>
+            <div class="metric-tabs" role="group" aria-label="Choose model comparison metric">
+              <button class="metric-tab" type="button" data-metric="auc" aria-pressed="true">ROC-AUC</button>
+              <button class="metric-tab" type="button" data-metric="ap" aria-pressed="false">Average Precision</button>
+              <button class="metric-tab" type="button" data-metric="p10r" aria-pressed="false">Precision @ 10% Recall</button>
+            </div>
+            <div class="chart" id="metric-chart" role="img" aria-label="ROC-AUC comparison: PureSAGE 0.826611, Hybrid GNN 0.830825, XGBoost 0.907310, XGBoost plus GNN Stack 0.871124">
+              <div class="chart-row" data-model="PureSAGE"><span class="chart-name">PureSAGE</span><span class="chart-track"><span class="chart-fill" style="--value:82.6611%"></span></span><span class="chart-value">0.826611</span></div>
+              <div class="chart-row" data-model="Hybrid GNN"><span class="chart-name">Hybrid GNN</span><span class="chart-track"><span class="chart-fill" style="--value:83.0825%"></span></span><span class="chart-value">0.830825</span></div>
+              <div class="chart-row" data-model="XGBoost"><span class="chart-name">XGBoost</span><span class="chart-track"><span class="chart-fill" style="--value:90.731%"></span></span><span class="chart-value">0.907310</span></div>
+              <div class="chart-row" data-model="XGBoost + GNN Stack"><span class="chart-name">XGBoost + GNN Stack</span><span class="chart-track"><span class="chart-fill" style="--value:87.1124%"></span></span><span class="chart-value">0.871124</span></div>
+            </div>
+            <div class="chart-axis" aria-hidden="true"><span>0.0</span><span>0.5</span><span>1.0</span></div>
+          </div>
+          <aside class="metric-card metric-interpretation">
+            <div><div class="callout-mark" aria-hidden="true">↗</div><h3>Selection is not a leaderboard.</h3><p>XGBoost leads the supplied test results on ROC-AUC and Average Precision. The XGBoost + GNN Stack has the highest Precision at 10% Recall. Results depend on the metric.</p></div>
+            <div class="selection"><strong>Why PureSAGE?</strong> PureSAGE was selected as the deployed inference architecture based on validation selection—not because it achieved the best score on every test metric.</div>
+          </aside>
+        </div>
+        <div class="metric-table-wrap">
+          <table class="metric-table">
+            <thead><tr><th scope="col">Model</th><th scope="col">ROC-AUC</th><th scope="col">Average Precision</th><th scope="col">Precision at 10% Recall</th></tr></thead>
+            <tbody>
+              <tr><td>PureSAGE</td><td>0.826611</td><td>0.410613</td><td>0.884783</td></tr>
+              <tr><td>Hybrid GNN</td><td>0.830825</td><td>0.426911</td><td>0.896247</td></tr>
+              <tr><td>XGBoost</td><td>0.907310</td><td>0.523031</td><td>0.933333</td></tr>
+              <tr><td>XGBoost + GNN Stack</td><td>0.871124</td><td>0.485202</td><td>0.959811</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="metric-caption">Metrics are the supplied held-out test results. Validation data informed architecture selection; the table does not imply public or production performance.</p>
+      </div>
+    </section>
+
+    <section class="media-section" id="dashboard" aria-labelledby="dashboard-title">
+      <div class="wrap">
+        <div class="section-heading">
+          <div class="section-kicker">04 · Monitoring view</div>
+          <h2 id="dashboard-title">A window into the project dashboard.</h2>
+          <p>The project dashboard visualizes the monitoring interface developed alongside the local serving pipeline.</p>
+        </div>
+        <figure class="media-frame">
+          <img src="assets/dashboard.png" alt="FraudGraph monitoring dashboard showing transaction scoring and system metrics" width="1600" height="900" loading="lazy">
+          <figcaption class="media-caption"><strong>FraudGraph dashboard</strong> · Static project screenshot</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="media-section" id="demo" aria-labelledby="demo-title">
+      <div class="wrap media-grid">
+        <div class="demo-column">
+          <div class="section-heading">
+            <div class="section-kicker">05 · Project demonstration</div>
+            <h2 id="demo-title">See the system in motion.</h2>
+            <p>A recorded walkthrough of the project demonstration. Playback is controlled by the viewer.</p>
+          </div>
+          <figure class="media-frame">
+            <video controls preload="metadata" playsinline aria-label="FraudGraph project demonstration video">
+              <source src="assets/demo.mp4" type="video/mp4">
+              Your browser does not support the video element. Open the project repository to view the demonstration.
+            </video>
+            <figcaption class="media-caption"><strong>Project demonstration</strong> · Video file served from this GitHub Pages site</figcaption>
+          </figure>
+        </div>
+        <aside class="status-card" style="align-self:center">
+          <div class="status-main">
+            <span class="status-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3 21 19H3L12 3Z" stroke="currentColor" stroke-width="1.5"/><path d="M12 9v4m0 3h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+            <div><h3>Inference status</h3><p>The FastAPI inference service has been tested locally. This public website does not connect to a live scoring API; public live inference has not been deployed. No predictions are simulated here.</p></div>
+          </div>
+          <span class="status-label">LOCAL TESTED · NOT PUBLIC</span>
+        </aside>
+      </div>
+    </section>
+
+    <section class="research-section" id="research" aria-labelledby="research-title">
+      <div class="wrap">
+        <div class="section-heading">
+          <div class="section-kicker">06 · Research &amp; engineering</div>
+          <h2 id="research-title">A disciplined path through the problem.</h2>
+          <p>Experiments are organized around temporal evaluation, relational representation, model comparison, and inspectable outputs.</p>
+        </div>
+        <div class="research-grid">
+          <article class="research-card"><span class="research-index">01</span><div><h3>Temporal split</h3><p>Training, validation, and test are separated by timeline (70/10/20). Validation informs model selection; test results are reported separately.</p></div></article>
+          <article class="research-card"><span class="research-index">02</span><div><h3>Heterogeneous graph</h3><p>Transactions, cards, merchants, and devices are represented as node types. Typed links include entity associations and transaction velocity clusters.</p></div></article>
+          <article class="research-card"><span class="research-index">03</span><div><h3>GraphSAGE experiments</h3><p>PureSAGE and a hybrid GraphSAGE/attention model explore message passing across edge types, alongside a strong XGBoost baseline.</p></div></article>
+          <article class="research-card"><span class="research-index">04</span><div><h3>Model comparison</h3><p>ROC-AUC, Average Precision, and Precision at 10% Recall provide complementary views of held-out test performance.</p></div></article>
+          <article class="research-card"><span class="research-index">05</span><div><h3>Evidence-based explanations</h3><p>The serving code includes an explanation layer that reports graph-grounded reasons; this site makes no claim that an online public explainer is available.</p></div></article>
+          <article class="research-card"><span class="research-index">06</span><div><h3>Scope &amp; limitations</h3><p>A research implementation and local serving test are not equivalent to a production system or a publicly accessible inference endpoint.</p></div></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="stack" aria-labelledby="stack-title">
+      <div class="wrap">
+        <div class="section-heading">
+          <div class="section-kicker">07 · Technology</div>
+          <h2 id="stack-title">Built for experimentation.</h2>
+          <p>Core technologies present in the project implementation and its local serving setup.</p>
+        </div>
+        <div class="stack-grid">
+          <article class="stack-card"><h3>Modeling &amp; data</h3><div class="stack-list"><span class="stack-tag">Python</span><span class="stack-tag">PyTorch</span><span class="stack-tag">PyTorch Geometric</span><span class="stack-tag">GraphSAGE</span><span class="stack-tag">XGBoost</span><span class="stack-tag">MLflow</span></div></article>
+          <article class="stack-card"><h3>Local serving &amp; observability</h3><div class="stack-list"><span class="stack-tag">FastAPI</span><span class="stack-tag">Redis</span><span class="stack-tag">Apache Kafka</span><span class="stack-tag">Prometheus</span><span class="stack-tag">Grafana</span><span class="stack-tag">Docker Compose</span></div><p class="stack-note">NetworkX is not part of the current implementation. React and PostgreSQL are not used in this project.</p></article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <div class="footer-copy"><strong>FraudGraph</strong> · Graph-Based Financial Fraud Detection<br>Python · PyTorch Geometric · XGBoost · FastAPI · Redis</div>
+      <a class="footer-link" href="https://github.com/RiyaBisht1708/fraudGraph" target="_blank" rel="noopener noreferrer">
+        View public GitHub repository
+        <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M6 14 14 6M7 6h7v7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+  </footer>
+
+  <script>
+    (() => {
+      const results = {
+        auc: {
+          label: "ROC-AUC",
+          values: [0.826611, 0.830825, 0.907310, 0.871124]
+        },
+        ap: {
+          label: "Average Precision",
+          values: [0.410613, 0.426911, 0.523031, 0.485202]
+        },
+        p10r: {
+          label: "Precision at 10% Recall",
+          values: [0.884783, 0.896247, 0.933333, 0.959811]
+        }
+      };
+      const chart = document.querySelector("#metric-chart");
+      const buttons = document.querySelectorAll(".metric-tab");
+      const rows = chart.querySelectorAll(".chart-row");
+
+      buttons.forEach((button) => {
+        button.addEventListener("click", () => {
+          const metric = results[button.dataset.metric];
+          buttons.forEach((item) => item.setAttribute("aria-pressed", String(item === button)));
+          rows.forEach((row, index) => {
+            const value = metric.values[index];
+            row.querySelector(".chart-fill").style.setProperty("--value", `${value * 100}%`);
+            row.querySelector(".chart-value").textContent = value.toFixed(6);
+          });
+          chart.setAttribute(
+            "aria-label",
+            `${metric.label} comparison: ${Array.from(rows, (row, index) => `${row.dataset.model} ${metric.values[index].toFixed(6)}`).join(", ")}`
+          );
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
