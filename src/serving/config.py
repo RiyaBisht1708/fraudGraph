@@ -3,6 +3,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 ARTIFACTS = Path(os.getenv("FRAUDGRAPH_ARTIFACTS", REPO_ROOT / "artifacts"))
+HISTORY_DB = Path(os.getenv("FRAUDGRAPH_HISTORY_DB", REPO_ROOT / "data" / "fraudgraph_history.db"))
 
 MODEL_WEIGHTS = ARTIFACTS / "graphsage_pure.pt"
 MODEL_META = ARTIFACTS / "model_meta.pkl"

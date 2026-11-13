@@ -292,6 +292,18 @@ curl -X POST localhost:8000/score -H 'Content-Type: application/json' \
   -d '{"TransactionAmt":59,"ProductCD":"W","card1":7919,"addr1":204,"TransactionDT":8000000,"TransactionID":1}'
 ```
 
+The dashboard also provides persistent local transaction history:
+
+```text
+GET /history?limit=20&offset=0&search=<transaction-id>&decision=FLAG
+GET /history/{record_id}
+```
+
+History is stored in SQLite at `data/fraudgraph_history.db` by default. Set
+`FRAUDGRAPH_HISTORY_DB` to use another local path. Stored records omit raw card IDs,
+address IDs, device information, and feature vectors. History storage availability is
+reported as `history_store` in `/health`.
+
 Load test and streaming path:
 
 ```bash

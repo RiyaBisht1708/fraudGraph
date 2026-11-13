@@ -273,6 +273,65 @@
     .metric-definition dd { margin: 0; color: #7e8da2; font-size: 8px; line-height: 1.5; }
     .selected-row-label { display: inline-flex; align-items: center; gap: 5px; flex-wrap: wrap; }
     .selected-row-badge { border: 1px solid rgba(112,165,255,.2); border-radius: 999px; padding: 2px 5px; color: #adc8fa; background: rgba(89,139,227,.08); font-size: 7px; font-weight: 600; }
+    .history-panel { margin-top: 14px; scroll-margin-top: 91px; }
+    .history-total { display: grid; gap: 2px; min-width: 88px; text-align: right; }
+    .history-total strong { color: #dce7f5; font-size: 16px; font-weight: 670; font-variant-numeric: tabular-nums; }
+    .history-total span { color: #78889e; font-size: 8px; }
+    .history-toolbar { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding: 13px 15px; border-bottom: 1px solid var(--line); }
+    .history-filters { display: flex; flex: 1; align-items: flex-end; gap: 9px; }
+    .history-control { display: grid; gap: 4px; min-width: 0; }
+    .history-control label { color: #8998ad; font-size: 8px; }
+    .history-control input, .history-control select { height: 32px; border: 1px solid rgba(158,179,210,.15); border-radius: 7px; padding: 0 9px; color: #dce5f1; background: #0d1521; font-size: 9px; }
+    .history-control input { width: min(260px, 35vw); }
+    .history-control select { min-width: 130px; }
+    .history-actions { display: flex; align-items: center; gap: 7px; }
+    .history-actions .secondary-button { min-height: 32px; }
+    .history-message { display: none; padding: 25px 16px; color: #8d9cb1; text-align: center; font-size: 10px; }
+    .history-message.visible { display: block; }
+    .history-message.error { color: #ef9ca4; }
+    .history-table-wrap { min-width: 0; overflow-x: auto; }
+    .history-table { width: 100%; min-width: 790px; border-collapse: collapse; text-align: left; }
+    .history-table th, .history-table td { padding: 10px 12px; border-bottom: 1px solid rgba(159,180,211,.08); white-space: nowrap; }
+    .history-table tr:last-child td { border-bottom: 0; }
+    .history-table th { color: #78879c; background: rgba(255,255,255,.014); font-size: 8px; font-weight: 620; }
+    .history-table td { color: #bac6d6; font-size: 9px; font-variant-numeric: tabular-nums; }
+    .history-table td:first-child { color: #d2deed; font-weight: 570; }
+    .history-decision { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 4px 7px; font-size: 8px; font-weight: 650; }
+    .history-decision::before { width: 5px; height: 5px; border-radius: 50%; background: currentColor; content: ""; }
+    .history-decision.approve { color: var(--green); background: var(--green-soft); }
+    .history-decision.flag { color: var(--amber); background: var(--amber-soft); }
+    .history-decision.decline { color: var(--red); background: var(--red-soft); }
+    .history-report-button { min-height: 26px; border: 1px solid rgba(112,165,255,.2); border-radius: 6px; padding: 0 8px; color: #b7cefa; background: rgba(89,139,227,.08); cursor: pointer; font-size: 8px; }
+    .history-report-button:hover { border-color: rgba(112,165,255,.4); background: rgba(89,139,227,.15); }
+    .history-pagination { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 14px; border-top: 1px solid var(--line); }
+    .history-page-summary { color: #7e8da2; font-size: 9px; }
+    .history-page-controls { display: flex; align-items: center; gap: 7px; }
+    .history-page-controls .secondary-button { min-height: 28px; }
+    .history-page-controls button:disabled { opacity: .42; cursor: not-allowed; }
+    .report-dialog { width: min(800px, calc(100vw - 28px)); max-width: 800px; max-height: min(90vh, 900px); overflow: auto; border: 1px solid var(--line-strong); border-radius: 14px; padding: 0; color: var(--text); background: #101927; box-shadow: 0 28px 90px rgba(0,0,0,.52); }
+    .report-dialog::backdrop { background: rgba(3,7,13,.75); backdrop-filter: blur(4px); }
+    .report-dialog-header { position: sticky; z-index: 1; top: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); background: rgba(16,25,39,.96); }
+    .report-dialog-title { margin: 0; font-size: 12px; font-weight: 650; }
+    .report-dialog-actions { display: flex; gap: 7px; }
+    .report-close { min-height: 30px; border: 1px solid var(--line-strong); border-radius: 7px; padding: 0 9px; color: #bdc9d9; background: transparent; cursor: pointer; font-size: 9px; }
+    .report-loading, .report-error { padding: 34px 18px; color: #91a0b5; text-align: center; font-size: 10px; }
+    .report-error { color: #ef9ca4; }
+    .report-document { margin: 22px; padding: 30px; border: 1px solid rgba(159,180,211,.12); border-radius: 10px; background: #f9fbff; color: #152034; }
+    .report-document[hidden] { display: none !important; }
+    .report-brand { color: #315d9c; font-size: 9px; font-weight: 750; letter-spacing: .13em; text-transform: uppercase; }
+    .report-document h2 { margin: 7px 0 4px; color: #111d31; font-size: 23px; letter-spacing: -.035em; }
+    .report-generated { margin: 0; color: #68778c; font-size: 9px; }
+    .report-disclaimer { margin: 17px 0; border-left: 3px solid #597db5; padding: 10px 12px; color: #394b65; background: #edf3fc; font-size: 10px; }
+    .report-section { margin-top: 20px; }
+    .report-section h3 { margin: 0 0 9px; color: #1d2c44; font-size: 12px; }
+    .report-fields { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; margin: 0; }
+    .report-field { min-width: 0; padding: 9px; border: 1px solid #e1e7f0; border-radius: 7px; }
+    .report-field dt { color: #6a788d; font-size: 8px; }
+    .report-field dd { margin: 3px 0 0; color: #18263c; font-size: 10px; font-weight: 620; overflow-wrap: anywhere; }
+    .report-reasons, .report-evidence { display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
+    .report-reasons li, .report-evidence li { padding: 9px 10px; border: 1px solid #e1e7f0; border-radius: 7px; color: #24334b; font-size: 9px; overflow-wrap: anywhere; }
+    .report-subtle { color: #6a788d; }
+    .report-footer { margin-top: 21px; padding-top: 10px; border-top: 1px solid #dfe5ed; color: #718096; font-size: 8px; }
     .graph-view { min-width: 0; padding: 10px 10px 0; }
     .graph-svg { display: block; width: 100%; height: auto; overflow: visible; }
     .graph-svg.graph-enter { animation: graph-reveal .38s ease-out both; }
@@ -380,6 +439,12 @@
       .api-error { margin-inline: 13px; }
       .graph-view { padding-inline: 5px; }
       .graph-legend { gap: 7px 10px; padding-inline: 12px; }
+      .history-toolbar { align-items: stretch; flex-direction: column; padding: 11px 12px; }
+      .history-filters { align-items: stretch; flex-direction: column; }
+      .history-control input, .history-control select { width: 100%; }
+      .history-actions { justify-content: flex-end; }
+      .history-pagination { align-items: flex-start; flex-direction: column; }
+      .report-document { margin: 12px; padding: 18px; }
       .footer { flex-direction: column; }
     }
     @media (max-width: 390px) {
@@ -389,9 +454,24 @@
       .privacy-note { max-width: none; }
       .primary-button { width: 100%; }
       .api-endpoint { font-size: 8px; }
+      .report-fields { grid-template-columns: 1fr; }
+      .report-dialog-actions .secondary-button { padding-inline: 7px; }
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+    @media print {
+      @page { margin: 16mm; }
+      body.print-report { min-width: 0; background: #fff; color: #152034; }
+      body.print-report > .app { display: none !important; }
+      body.print-report #report-dialog[open] {
+        position: static; display: block; width: 100%; max-width: none; max-height: none; overflow: visible;
+        margin: 0; border: 0; border-radius: 0; padding: 0; background: #fff; color: #152034; box-shadow: none;
+      }
+      body.print-report #report-dialog::backdrop { display: none; }
+      body.print-report .report-dialog-header, body.print-report .report-loading, body.print-report .report-error { display: none !important; }
+      body.print-report .report-document { display: block !important; margin: 0; border: 0; border-radius: 0; padding: 0; background: #fff; color: #152034; }
+      body.print-report .report-section, body.print-report .report-field, body.print-report .report-reasons li, body.print-report .report-evidence li { break-inside: avoid; }
     }
   </style>
 </head>
@@ -415,6 +495,10 @@
           <a href="#analyze">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8" stroke="currentColor" stroke-width="1.5"/><path d="m16 16 4.5 4.5M10.8 7.5v6.6m-3.3-3.3h6.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
             Analyze Transaction
+          </a>
+          <a href="#transaction-history">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 5.5h14v14H5zM8 3.5v4m8-4v4M5 9.5h14m-10 4h6m-6 3h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Transaction History
           </a>
           <a href="#insights">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 19.5h16M6.5 16V10m5 6V5m5 11v-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
@@ -661,6 +745,37 @@
           </article>
         </section>
 
+        <section class="panel history-panel" id="transaction-history" aria-labelledby="history-title">
+          <div class="panel-header">
+            <div class="panel-title-wrap"><h2 class="panel-title" id="history-title">Transaction history</h2><div class="panel-subtitle">Locally saved research/demo inference records</div></div>
+            <div class="history-total" aria-live="polite"><strong id="history-total">—</strong><span>total saved records</span></div>
+          </div>
+          <div class="history-toolbar">
+            <div class="history-filters">
+              <div class="history-control"><label for="history-search">Search transaction ID</label><input id="history-search" type="search" maxlength="128" placeholder="Search by transaction ID" autocomplete="off"></div>
+              <div class="history-control"><label for="history-decision">Decision</label><select id="history-decision"><option value="">All decisions</option><option value="APPROVE">APPROVE</option><option value="FLAG">FLAG</option><option value="DECLINE">DECLINE</option></select></div>
+            </div>
+            <div class="history-actions">
+              <button class="secondary-button" id="history-csv" type="button" disabled><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 3v9m0 0 3.5-3.5M10 12 6.5 8.5M4 13v3.5h12V13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Export CSV</button>
+              <button class="secondary-button" id="history-refresh" type="button"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M16 8a6.3 6.3 0 0 0-11.4-2L3 8m0-4v4h4m-3 4a6.3 6.3 0 0 0 11.4 2L17 12m0 4v-4h-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Refresh</button>
+            </div>
+          </div>
+          <div class="history-message" id="history-loading" role="status" hidden>Loading saved transaction history…</div>
+          <div class="history-message error" id="history-error" role="alert" hidden></div>
+          <div class="history-message" id="history-empty" hidden>No saved records match this search and decision filter.</div>
+          <div class="history-table-wrap" id="history-table-wrap">
+            <table class="history-table">
+              <caption class="sr-only">Saved transaction analysis history</caption>
+              <thead><tr><th scope="col">Transaction ID</th><th scope="col">Fraud probability</th><th scope="col">Decision</th><th scope="col">Amount</th><th scope="col">Inference latency</th><th scope="col">Analysis date</th><th scope="col">Report</th></tr></thead>
+              <tbody id="history-rows"></tbody>
+            </table>
+          </div>
+          <div class="history-pagination">
+            <span class="history-page-summary" id="history-page-summary">No saved records</span>
+            <div class="history-page-controls"><button class="secondary-button" id="history-previous" type="button" disabled>Previous</button><button class="secondary-button" id="history-next" type="button" disabled>Next</button></div>
+          </div>
+        </section>
+
         <section class="panel api-panel" id="api-status" aria-labelledby="api-title">
           <div class="panel-header">
             <div class="panel-title-wrap"><h2 class="panel-title" id="api-title">API status</h2><div class="panel-subtitle">Backend health is queried from the current origin</div></div>
@@ -684,6 +799,26 @@
     </div>
   </div>
 
+  <dialog class="report-dialog" id="report-dialog" aria-labelledby="report-dialog-title">
+    <div class="report-dialog-header">
+      <h2 class="report-dialog-title" id="report-dialog-title">Transaction report</h2>
+      <div class="report-dialog-actions">
+        <button class="secondary-button" id="report-print" type="button" disabled>Export PDF</button>
+        <button class="report-close" id="report-close" type="button">Close</button>
+      </div>
+    </div>
+    <div class="report-loading" id="report-loading" role="status" hidden>Loading saved report…</div>
+    <div class="report-error" id="report-error" role="alert" hidden></div>
+    <article class="report-document" id="report-document" hidden>
+      <div class="report-brand">FraudGraph · Financial Intelligence</div>
+      <h2>Transaction analysis report</h2>
+      <p class="report-generated" id="report-generated"></p>
+      <p class="report-disclaimer">Research/demo inference only. This report is not a real financial decision, an adjudication, or a recommendation to approve or decline a payment.</p>
+      <div id="report-content"></div>
+      <p class="report-footer">FraudGraph research/demo inference · Stored transaction summary excludes raw card IDs, address IDs, device information, and feature vectors.</p>
+    </article>
+  </dialog>
+
   <script>
     (() => {
       "use strict";
@@ -699,6 +834,12 @@
       const graphVisualization = $("#graph-visualization");
       const healthButton = $("#health-check");
       const apiError = $("#api-error");
+      const historyRows = $("#history-rows");
+      const historySearch = $("#history-search");
+      const historyDecision = $("#history-decision");
+      const historyState = { limit: 20, offset: 0, total: 0, totalSaved: 0, items: [], requestId: 0 };
+      const reportDialog = $("#report-dialog");
+      let historySearchTimer;
       const counts = { total: 0, APPROVE: 0, FLAG: 0, DECLINE: 0 };
       const fieldNames = ["TransactionAmt", "ProductCD", "card1", "addr1", "TransactionDT"];
       const metricModels = [
@@ -762,6 +903,332 @@
           throw new Error(detail);
         }
         return data;
+      }
+
+      function historyQuery({ offset = historyState.offset, limit = historyState.limit, filtered = true } = {}) {
+        const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+        if (filtered && historySearch.value.trim()) params.set("search", historySearch.value.trim());
+        if (filtered && historyDecision.value) params.set("decision", historyDecision.value);
+        return params;
+      }
+
+      function setHistoryMessage(element, visible, message) {
+        element.textContent = message;
+        element.hidden = !visible;
+        element.classList.toggle("visible", visible);
+      }
+
+      function formatHistoryDate(value) {
+        if (typeof value !== "string" && typeof value !== "number") return "—";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return String(value);
+        return new Intl.DateTimeFormat(undefined, {
+          year: "numeric", month: "short", day: "2-digit",
+          hour: "2-digit", minute: "2-digit", timeZoneName: "short"
+        }).format(date);
+      }
+
+      function formatHistoryAmount(value) {
+        return typeof value === "number" && Number.isFinite(value)
+          ? new Intl.NumberFormat(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)
+          : "—";
+      }
+
+      function makeHistoryCell(row, value) {
+        const cell = document.createElement("td");
+        cell.textContent = value;
+        row.append(cell);
+        return cell;
+      }
+
+      function renderHistoryRows(items) {
+        historyRows.replaceChildren();
+        items.forEach((item) => {
+          const row = document.createElement("tr");
+          makeHistoryCell(row, item.transaction_id == null ? "—" : String(item.transaction_id));
+          makeHistoryCell(row, typeof item.fraud_score === "number" && Number.isFinite(item.fraud_score)
+            ? `${(item.fraud_score * 100).toFixed(2)}%`
+            : "—");
+
+          const decisionCell = document.createElement("td");
+          const decision = document.createElement("span");
+          const decisionName = typeof item.decision === "string" ? item.decision.toUpperCase() : "";
+          decision.className = `history-decision ${["APPROVE", "FLAG", "DECLINE"].includes(decisionName) ? decisionName.toLowerCase() : ""}`;
+          decision.textContent = decisionName || "—";
+          decisionCell.append(decision);
+          row.append(decisionCell);
+
+          makeHistoryCell(row, formatHistoryAmount(item.transaction_amount));
+          makeHistoryCell(row, typeof item.latency_ms === "number" && Number.isFinite(item.latency_ms)
+            ? `${item.latency_ms.toFixed(2)} ms`
+            : "—");
+          makeHistoryCell(row, formatHistoryDate(item.created_at_utc));
+
+          const actionCell = document.createElement("td");
+          const viewButton = document.createElement("button");
+          viewButton.className = "history-report-button";
+          viewButton.type = "button";
+          viewButton.textContent = "View report";
+          viewButton.dataset.recordId = String(item.id);
+          viewButton.addEventListener("click", () => openHistoryReport(item.id));
+          actionCell.append(viewButton);
+          row.append(actionCell);
+          historyRows.append(row);
+        });
+      }
+
+      async function loadHistory() {
+        const requestId = ++historyState.requestId;
+        const loading = $("#history-loading");
+        const error = $("#history-error");
+        const empty = $("#history-empty");
+        const table = $("#history-table-wrap");
+        const refreshButton = $("#history-refresh");
+        refreshButton.disabled = true;
+        setHistoryMessage(loading, true, "Loading saved transaction history…");
+        setHistoryMessage(error, false, "");
+        setHistoryMessage(empty, false, "");
+        table.hidden = true;
+
+        try {
+          const filteredParams = historyQuery();
+          const pageResponse = await fetch(`/history?${filteredParams}`, {
+            headers: { "Accept": "application/json" }, cache: "no-store"
+          });
+          const page = await readJson(pageResponse);
+          if (!Array.isArray(page.items) || !Number.isInteger(page.total)) {
+            throw new Error("The history service returned an invalid page.");
+          }
+
+          let totalSaved = page.total;
+          if (historySearch.value.trim() || historyDecision.value) {
+            const countResponse = await fetch(`/history?${historyQuery({ offset: 0, limit: 1, filtered: false })}`, {
+              headers: { "Accept": "application/json" }, cache: "no-store"
+            });
+            const countPage = await readJson(countResponse);
+            if (!Number.isInteger(countPage.total)) throw new Error("The history service returned an invalid record count.");
+            totalSaved = countPage.total;
+          }
+          if (requestId !== historyState.requestId) return;
+
+          historyState.items = page.items;
+          historyState.total = page.total;
+          historyState.totalSaved = totalSaved;
+          $("#history-total").textContent = String(totalSaved);
+          renderHistoryRows(page.items);
+          const first = page.total === 0 ? 0 : historyState.offset + 1;
+          const last = Math.min(historyState.offset + page.items.length, page.total);
+          $("#history-page-summary").textContent = page.total
+            ? `Showing ${first}–${last} of ${page.total} matching records`
+            : "No matching records";
+          $("#history-previous").disabled = historyState.offset === 0;
+          $("#history-next").disabled = historyState.offset + historyState.limit >= page.total;
+          $("#history-csv").disabled = page.total === 0;
+          table.hidden = page.items.length === 0;
+          setHistoryMessage(empty, page.items.length === 0, page.total === 0
+            ? "No saved records match this search and decision filter."
+            : "No records are available on this page.");
+        } catch (errorValue) {
+          if (requestId !== historyState.requestId) return;
+          historyState.items = [];
+          historyRows.replaceChildren();
+          $("#history-total").textContent = "—";
+          $("#history-page-summary").textContent = "History unavailable";
+          $("#history-previous").disabled = true;
+          $("#history-next").disabled = true;
+          $("#history-csv").disabled = true;
+          setHistoryMessage(error, true, errorValue.name === "TypeError"
+            ? "Could not reach transaction history. Confirm the FastAPI backend and local history database are available."
+            : errorValue.message || "Transaction history could not be loaded.");
+        } finally {
+          if (requestId === historyState.requestId) {
+            setHistoryMessage(loading, false, "");
+            refreshButton.disabled = false;
+          }
+        }
+      }
+
+      function csvCell(value) {
+        let safeValue = value == null ? "" : String(value);
+        if (/^[\s\uFEFF]*[=+\-@]/.test(safeValue)) safeValue = `'${safeValue}`;
+        return `"${safeValue.replaceAll('"', '""')}"`;
+      }
+
+      async function exportHistoryCsv() {
+        const button = $("#history-csv");
+        if (historyState.total === 0 || button.disabled) return;
+        button.disabled = true;
+        button.setAttribute("aria-busy", "true");
+        try {
+          const records = [];
+          let offset = 0;
+          let total = historyState.total;
+          while (offset < total) {
+            const response = await fetch(`/history?${historyQuery({ offset, limit: 100 })}`, {
+              headers: { "Accept": "application/json" }, cache: "no-store"
+            });
+            const page = await readJson(response);
+            if (!Array.isArray(page.items) || !Number.isInteger(page.total)) {
+              throw new Error("The history service returned an invalid page.");
+            }
+            total = page.total;
+            records.push(...page.items);
+            if (page.items.length === 0) break;
+            offset += page.items.length;
+          }
+          const headers = ["Transaction ID", "Fraud probability", "Decision", "Amount", "Inference latency", "Analysis date"];
+          const lines = [headers, ...records.map((item) => [
+            item.transaction_id,
+            typeof item.fraud_score === "number" ? `${(item.fraud_score * 100).toFixed(2)}%` : "",
+            item.decision,
+            typeof item.transaction_amount === "number" ? item.transaction_amount : "",
+            typeof item.latency_ms === "number" ? `${item.latency_ms.toFixed(2)} ms` : "",
+            item.created_at_utc
+          ])].map((line) => line.map(csvCell).join(","));
+          const blob = new Blob(["\uFEFF", lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+          const url = URL.createObjectURL(blob);
+          const anchor = document.createElement("a");
+          anchor.href = url;
+          anchor.download = "fraudgraph-transaction-history.csv";
+          document.body.append(anchor);
+          anchor.click();
+          anchor.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } catch (errorValue) {
+          setHistoryMessage($("#history-error"), true, errorValue.message || "CSV export failed.");
+        } finally {
+          button.removeAttribute("aria-busy");
+          button.disabled = historyState.total === 0;
+        }
+      }
+
+      function reportSection(container, title) {
+        const section = document.createElement("section");
+        section.className = "report-section";
+        const heading = document.createElement("h3");
+        heading.textContent = title;
+        section.append(heading);
+        container.append(section);
+        return section;
+      }
+
+      function reportFields(section, entries) {
+        const list = document.createElement("dl");
+        list.className = "report-fields";
+        entries.forEach(([label, value]) => {
+          const field = document.createElement("div");
+          field.className = "report-field";
+          const term = document.createElement("dt");
+          term.textContent = label;
+          const description = document.createElement("dd");
+          description.textContent = value == null || value === "" ? "—" : String(value);
+          field.append(term, description);
+          list.append(field);
+        });
+        section.append(list);
+      }
+
+      function renderReport(record) {
+        const content = $("#report-content");
+        content.replaceChildren();
+        $("#report-generated").textContent = `Report generated ${formatHistoryDate(new Date().toISOString())}`;
+
+        const summary = reportSection(content, "Transaction summary");
+        reportFields(summary, [
+          ["Record ID", record.id],
+          ["Transaction ID", record.transaction_id],
+          ["Transaction amount", formatHistoryAmount(record.transaction_amount)],
+          ["Product category", record.product_category],
+          ["Dataset transaction timestamp", record.transaction_dt],
+          ["Analysis timestamp (UTC)", record.created_at_utc]
+        ]);
+
+        const decision = typeof record.decision === "string" ? record.decision.toUpperCase() : "—";
+        const score = typeof record.fraud_score === "number" && Number.isFinite(record.fraud_score)
+          ? `${(record.fraud_score * 100).toFixed(2)}%`
+          : "—";
+        const inference = reportSection(content, "Inference result");
+        reportFields(inference, [
+          ["Fraud probability", score],
+          ["Decision", decision],
+          ["Inference latency", typeof record.latency_ms === "number" ? `${record.latency_ms.toFixed(2)} ms` : "—"]
+        ]);
+
+        const reasonsSection = reportSection(content, "Explanation factors");
+        const reasonsList = document.createElement("ul");
+        reasonsList.className = "report-reasons";
+        const reasons = Array.isArray(record.top_reasons) ? record.top_reasons : [];
+        reasons.forEach((reason) => {
+          if (!reason || typeof reason !== "object") return;
+          const item = document.createElement("li");
+          item.textContent = typeof reason.factor === "string" ? reason.factor : "Explanation factor";
+          const metadata = [reason.edge_type, typeof reason.weight === "number" ? `weight ${reason.weight}` : null]
+            .filter(Boolean).join(" · ");
+          if (metadata) {
+            const detail = document.createElement("span");
+            detail.className = "report-subtle";
+            detail.textContent = ` (${metadata})`;
+            item.append(detail);
+          }
+          reasonsList.append(item);
+        });
+        if (reasonsList.childElementCount === 0) {
+          const item = document.createElement("li");
+          item.textContent = "No explanation factors were stored for this record.";
+          reasonsList.append(item);
+        }
+        reasonsSection.append(reasonsList);
+
+        const evidenceSection = reportSection(content, "Graph relationship evidence");
+        const evidenceList = document.createElement("ul");
+        evidenceList.className = "report-evidence";
+        const graphEvidence = Array.isArray(record.graph_evidence) ? record.graph_evidence : [];
+        graphEvidence.forEach((relationship) => {
+          if (!relationship || typeof relationship !== "object") return;
+          const item = document.createElement("li");
+          const fields = relationship.evidence && typeof relationship.evidence === "object"
+            ? Object.entries(relationship.evidence)
+              .filter(([, value]) => value === null || ["string", "number", "boolean"].includes(typeof value))
+              .map(([key, value]) => `${key}: ${String(value)}`)
+            : [];
+          item.textContent = [relationship.edge_type, ...fields].filter(Boolean).join(" · ");
+          evidenceList.append(item);
+        });
+        if (evidenceList.childElementCount === 0) {
+          const item = document.createElement("li");
+          item.textContent = "No graph relationship evidence was stored for this record.";
+          evidenceList.append(item);
+        }
+        evidenceSection.append(evidenceList);
+        $("#report-document").hidden = false;
+        $("#report-print").disabled = false;
+      }
+
+      async function openHistoryReport(recordId) {
+        $("#report-loading").hidden = false;
+        $("#report-error").hidden = true;
+        $("#report-document").hidden = true;
+        $("#report-print").disabled = true;
+        if (!reportDialog.open) reportDialog.showModal();
+        try {
+          const response = await fetch(`/history/${encodeURIComponent(String(recordId))}`, {
+            headers: { "Accept": "application/json" }, cache: "no-store"
+          });
+          const record = await readJson(response);
+          renderReport(record);
+        } catch (errorValue) {
+          $("#report-error").textContent = errorValue.name === "TypeError"
+            ? "Could not reach the history report service."
+            : errorValue.message || "The saved report could not be loaded.";
+          $("#report-error").hidden = false;
+        } finally {
+          $("#report-loading").hidden = true;
+        }
+      }
+
+      function closeReportDialog() {
+        if (reportDialog.open) reportDialog.close();
+        document.body.classList.remove("print-report");
       }
 
       function clearFieldErrors() {
@@ -1234,6 +1701,7 @@
           const data = await readJson(response);
           renderResult(data);
           updateCounters(String(data.decision).toUpperCase());
+          await loadHistory();
         } catch (error) {
           resultData.hidden = true;
           resultEmpty.hidden = false;
@@ -1269,13 +1737,20 @@
           const health = await readJson(response);
           const modelReady = health.model_ready === true;
           const redisReady = health.redis === true;
-          const statusOk = health.status === "ok" && modelReady && redisReady;
+          const historyUnavailable = health.history_store === false;
+          const statusOk = health.status === "ok" && modelReady && redisReady && !historyUnavailable;
+          const historyStatus = health.history_store === true
+            ? " Transaction history storage is ready."
+            : health.history_store === false
+              ? " Transaction history storage is unavailable."
+              : "";
           if (statusOk) {
-            setHealth("ok", "Healthy", "FastAPI is reachable; model and Redis report ready.");
+            setHealth("ok", "Healthy", `FastAPI is reachable; model and Redis report ready.${historyStatus}`);
           } else {
             const details = [];
             if (!modelReady) details.push("model not ready");
             if (!redisReady) details.push("Redis unavailable");
+            if (health.history_store === false) details.push("history storage unavailable");
             if (typeof health.startup_error === "string" && health.startup_error) details.push(health.startup_error);
             setHealth("degraded", "Degraded", details.join(" · ") || "Backend responded with a degraded status.");
           }
@@ -1296,6 +1771,37 @@
         }
       }
       healthButton.addEventListener("click", checkHealth);
+      $("#history-refresh").addEventListener("click", () => loadHistory());
+      $("#history-csv").addEventListener("click", exportHistoryCsv);
+      $("#history-search").addEventListener("input", () => {
+        clearTimeout(historySearchTimer);
+        historySearchTimer = setTimeout(() => {
+          historyState.offset = 0;
+          loadHistory();
+        }, 250);
+      });
+      $("#history-decision").addEventListener("change", () => {
+        historyState.offset = 0;
+        loadHistory();
+      });
+      $("#history-previous").addEventListener("click", () => {
+        historyState.offset = Math.max(0, historyState.offset - historyState.limit);
+        loadHistory();
+      });
+      $("#history-next").addEventListener("click", () => {
+        if (historyState.offset + historyState.limit < historyState.total) {
+          historyState.offset += historyState.limit;
+          loadHistory();
+        }
+      });
+      $("#report-close").addEventListener("click", closeReportDialog);
+      $("#report-print").addEventListener("click", () => {
+        if ($("#report-document").hidden) return;
+        document.body.classList.add("print-report");
+        window.print();
+      });
+      reportDialog.addEventListener("close", () => document.body.classList.remove("print-report"));
+      window.addEventListener("afterprint", () => document.body.classList.remove("print-report"));
 
       const sidebar = $("#sidebar");
       const menuToggle = $("#menu-toggle");
@@ -1325,6 +1831,7 @@
         });
       });
       renderMetricCharts();
+      loadHistory();
     })();
   </script>
 </body>
