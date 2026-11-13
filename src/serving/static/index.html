@@ -1738,18 +1738,21 @@
           const modelReady = health.model_ready === true;
           const redisReady = health.redis === true;
           const historyUnavailable = health.history_store === false;
-          const statusOk = health.status === "ok" && modelReady && redisReady && !historyUnavailable;
+          const redisConfigured = health.redis_configured !== false;
+          const redisOperational = !redisConfigured || redisReady;
+          const statusOk = health.status === "ok" && modelReady && redisOperational && !historyUnavailable;
           const historyStatus = health.history_store === true
-            ? " Transaction history storage is ready."
+            ? ` ${health.database?.backend || "History"} history storage is ready.`
             : health.history_store === false
               ? " Transaction history storage is unavailable."
               : "";
           if (statusOk) {
-            setHealth("ok", "Healthy", `FastAPI is reachable; model and Redis report ready.${historyStatus}`);
+            const redisStatus = redisConfigured ? "Redis reports ready." : "Redis is not configured (optional).";
+            setHealth("ok", "Healthy", `FastAPI is reachable; model reports ready. ${redisStatus}${historyStatus}`);
           } else {
             const details = [];
             if (!modelReady) details.push("model not ready");
-            if (!redisReady) details.push("Redis unavailable");
+            if (redisConfigured && !redisReady) details.push("Redis unavailable");
             if (health.history_store === false) details.push("history storage unavailable");
             if (typeof health.startup_error === "string" && health.startup_error) details.push(health.startup_error);
             setHealth("degraded", "Degraded", details.join(" · ") || "Backend responded with a degraded status.");

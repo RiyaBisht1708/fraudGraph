@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from . import config, metrics
 from .history_store import HistoryStore, HistoryStoreError
 from .inference import FraudScorer
-from .redis_store import RedisStore
+from .redis_store import DisabledRedisStore, RedisStore
 
 logger = logging.getLogger(__name__)
 state = {}
@@ -32,12 +32,19 @@ class Transaction(BaseModel):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     state["scorer"] = None
-    state["redis"] = RedisStore()
+    state["redis"] = RedisStore() if config.REDIS_CONFIGURED else DisabledRedisStore()
     state["startup_error"] = None
-    state["history_store"] = HistoryStore(config.HISTORY_DB)
+    state["history_store"] = None
+    state["history_store_backend"] = "postgresql" if config.DATABASE_URL else "sqlite"
     state["history_store_ready"] = False
     try:
-        state["history_store"].initialize()
+        history_store = HistoryStore(
+            config.HISTORY_DB,
+            database_url=config.DATABASE_URL,
+            sslmode=config.PGSSLMODE,
+        )
+        history_store.initialize()
+        state["history_store"] = history_store
         state["history_store_ready"] = True
     except HistoryStoreError as exc:
         logger.error("Transaction history initialization failed (%s)", type(exc).__name__)
@@ -47,7 +54,8 @@ async def lifespan(app: FastAPI):
         metrics.configure(scorer.explainer.amt_mean, scorer.explainer.amt_std)
     except FileNotFoundError as exc:
         state["startup_error"] = str(exc)
-        metrics.configure(0.0, 1.0)
+        logger.critical("Required FraudGraph model artifacts are unavailable: %s", exc)
+        raise
     yield
     state.clear()
 
@@ -86,12 +94,20 @@ def health():
     redis_ok = state["redis"].ping() if "redis" in state else False
     history_store = state.get("history_store")
     history_store_ok = bool(history_store and history_store.is_healthy())
+    model_ready = state.get("scorer") is not None
+    redis_ready = not config.REDIS_CONFIGURED or redis_ok
+    status_ok = model_ready and redis_ready and history_store_ok
     return {
-        "status": "ok" if state.get("scorer") is not None else "degraded",
+        "status": "ok" if status_ok else "degraded",
         "redis": redis_ok,
-        "model_ready": state.get("scorer") is not None,
+        "redis_configured": config.REDIS_CONFIGURED,
+        "model_ready": model_ready,
         "startup_error": state.get("startup_error"),
         "history_store": history_store_ok,
+        "database": {
+            "backend": state.get("history_store_backend", "postgresql" if config.DATABASE_URL else "sqlite"),
+            "ready": history_store_ok,
+        },
     }
 
 
