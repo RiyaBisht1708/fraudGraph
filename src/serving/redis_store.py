@@ -6,8 +6,17 @@ from . import config
 
 
 class RedisStore:
-    def __init__(self, host=config.REDIS_HOST, port=config.REDIS_PORT):
-        self.r = redis.Redis(host=host, port=port, decode_responses=True)
+    def __init__(
+        self,
+        host=config.REDIS_HOST,
+        port=config.REDIS_PORT,
+        url=config.REDIS_URL,
+    ):
+        self.r = (
+            redis.Redis.from_url(url, decode_responses=True)
+            if url
+            else redis.Redis(host=host, port=port, decode_responses=True)
+        )
 
     def ping(self) -> bool:
         try:
@@ -51,3 +60,19 @@ class RedisStore:
 
     def recent_neighbors(self, card1) -> list:
         return self.r.lrange(f"card:{card1}:neighbors", 0, config.NEIGHBOR_LIST_LEN - 1)
+
+
+class DisabledRedisStore:
+    """Keep local inference available when no Redis endpoint is configured."""
+
+    def ping(self) -> bool:
+        return False
+
+    def record_and_get_velocity(self, card1, ts: float, amount: float) -> dict:
+        return {field: 0 for field in config.WINDOWS}
+
+    def push_neighbor(self, card1, transaction_id) -> None:
+        return None
+
+    def recent_neighbors(self, card1) -> list:
+        return []

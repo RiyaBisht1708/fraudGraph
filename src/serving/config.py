@@ -2,7 +2,23 @@ import os
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-ARTIFACTS = Path(os.getenv("FRAUDGRAPH_ARTIFACTS", REPO_ROOT / "artifacts"))
+
+
+def _project_path(value: str, default: Path) -> Path:
+    path = Path(value).expanduser() if value else default
+    return path if path.is_absolute() else REPO_ROOT / path
+
+
+ARTIFACTS = _project_path(os.getenv("FRAUDGRAPH_ARTIFACTS", ""), REPO_ROOT / "artifacts")
+HISTORY_DB = _project_path(
+    os.getenv("FRAUDGRAPH_HISTORY_DB", ""),
+    REPO_ROOT / "data" / "fraudgraph_history.db",
+)
+DATABASE_URL = os.getenv("DATABASE_URL") or None
+PGSSLMODE = os.getenv("PGSSLMODE", "require")
+REDIS_URL = os.getenv("REDIS_URL") or None
+REDIS_HOST = os.getenv("REDIS_HOST") or None
+REDIS_CONFIGURED = bool(REDIS_URL or REDIS_HOST)
 
 MODEL_WEIGHTS = ARTIFACTS / "graphsage_pure.pt"
 MODEL_META = ARTIFACTS / "model_meta.pkl"
@@ -30,7 +46,6 @@ NUM_PARTITIONS = 3
 CONSUMER_GROUP = "fraud-scorer"
 
 # Redis
-REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
 REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
 VELOCITY_TTL_SEC = 48 * 3600
 NEIGHBOR_LIST_LEN = 20

@@ -275,15 +275,20 @@ requirements-serve.txt           serving deps (training deps live on Kaggle)
 
 ## Running it
 
-Needs Docker Desktop, Python 3.11+, and the artifacts from the notebooks (see
-below).
+Needs Python 3.11+ and the artifacts from the notebooks (see below). Redis is
+optional; set `REDIS_URL` or `REDIS_HOST` to enable the rolling velocity and
+neighbor cache. Without Redis the service remains usable and uses zero velocity
+counts.
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements-serve.txt
-docker compose up -d
 uvicorn src.serving.api:app --port 8000
 ```
+
+For the Redis-backed local streaming setup, start the services with
+`docker compose up -d` and set `REDIS_HOST=localhost` before starting FastAPI.
+Local history continues to use SQLite at `data/fraudgraph_history.db`.
 
 Score a transaction:
 
@@ -291,6 +296,84 @@ Score a transaction:
 curl -X POST localhost:8000/score -H 'Content-Type: application/json' \
   -d '{"TransactionAmt":59,"ProductCD":"W","card1":7919,"addr1":204,"TransactionDT":8000000,"TransactionID":1}'
 ```
+
+The dashboard also provides persistent local transaction history:
+
+```text
+GET /history?limit=20&offset=0&search=<transaction-id>&decision=FLAG
+GET /history/{record_id}
+```
+
+History is stored in SQLite at `data/fraudgraph_history.db` by default. Set
+`FRAUDGRAPH_HISTORY_DB` to use another local path. Stored records omit raw card IDs,
+address IDs, device information, and feature vectors. History storage availability is
+reported as `history_store` in `/health`.
+
+### Cloud Run and Supabase deployment preparation
+
+The repository includes a Cloud Run Dockerfile. It installs the CPU-only PyTorch
+wheel, copies the serving source and required PureSAGE artifacts, runs as a
+non-root user, and listens on Cloud Run's injected `PORT` (defaulting to 8080
+for local container runs). Build and smoke-test locally:
+
+```bash
+docker build --platform linux/amd64 -t fraudgraph:local .
+docker run --rm -p 8080:8080 -e PORT=8080 fraudgraph:local
+curl -fsS http://localhost:8080/health
+curl -fsS 'http://localhost:8080/history?limit=1&offset=0'
+```
+
+The local container example uses SQLite. Leave `DATABASE_URL` unset for local
+SQLite; optionally set `FRAUDGRAPH_HISTORY_DB` to choose another local database
+file. Setting `DATABASE_URL` selects PostgreSQL and
+`PGSSLMODE=require` (the default) enables SSL; use `verify-full` only when the
+appropriate CA certificate is available in the runtime. No existing SQLite
+history is copied or migrated automatically.
+
+For Supabase:
+
+1. Copy the PostgreSQL connection URI from the project's database connection
+   settings. Select the session pooler connection if Cloud Run's network cannot
+   reach the direct endpoint over IPv4.
+2. Keep the Supabase password out of the repository. Store the complete
+   connection URI as a Secret Manager secret named, for example,
+   `fraudgraph-database-url`, and grant the Cloud Run runtime service account
+   permission to access that secret. The URI should use SSL (`sslmode=require`).
+3. Configure Cloud Run with `DATABASE_URL` sourced from that secret. `PGSSLMODE`
+   is optional and defaults to `require`. `FRAUDGRAPH_ARTIFACTS` is optional;
+   the image uses `/app/artifacts`. `REDIS_URL` is optional and should itself be
+   supplied as a secret if configured. `PORT` is supplied by Cloud Run.
+
+After creating a project, Artifact Registry repository, and the Secret Manager
+entry through your normal approved process, the following are example commands
+to build/push the image and configure a Cloud Run service. They are documentation
+only and have not been run:
+
+```bash
+gcloud builds submit \
+  --tag REGION-docker.pkg.dev/PROJECT_ID/REPOSITORY/fraudgraph:TAG .
+
+gcloud run deploy fraudgraph \
+  --image REGION-docker.pkg.dev/PROJECT_ID/REPOSITORY/fraudgraph:TAG \
+  --region REGION \
+  --port 8080 \
+  --cpu 2 \
+  --memory 4Gi \
+  --concurrency 1 \
+  --set-env-vars PGSSLMODE=require \
+  --set-secrets DATABASE_URL=fraudgraph-database-url:latest
+```
+
+Use placeholders for your own project, region, repository, and image tag. Decide
+the Cloud Run authentication policy separately; the example does not enable
+unauthenticated access. Restrict and rotate database credentials according to
+your organization's policy, and set Cloud Run's maximum instance count to fit
+the Supabase connection limit. Supabase PostgreSQL is initialized with
+`CREATE TABLE/INDEX IF NOT EXISTS` on service startup. Initialization is
+repeatable and safe across concurrent instances. `/health` retains its existing
+fields and also returns database backend/readiness details; a failed database
+check yields a degraded status without exposing the connection URI. Missing
+required model artifact files now fail application startup clearly.
 
 Load test and streaming path:
 
