@@ -9,3 +9,11 @@ __pycache__/
 *.db
 *.sqlite
 *.sqlite3
+# Local model artifacts
+artifacts/
+
+# Editor settings
+.vscode/
+
+# Python environment and logs
+*.log
