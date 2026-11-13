@@ -1,3 +1,5 @@
+from pathlib import Path
+from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Response
@@ -40,7 +42,12 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="FraudGraph Scoring API", lifespan=lifespan)
+STATIC_DIR = Path(__file__).resolve().parent / "static"
 
+
+@app.get("/", include_in_schema=False)
+def dashboard():
+    return FileResponse(STATIC_DIR / "index.html")
 
 def score_transaction(payload: dict) -> dict:
     store: RedisStore = state["redis"]
