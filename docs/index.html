@@ -3,546 +3,1832 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#080d18">
-  <meta name="description" content="FraudGraph is a research project exploring graph-based financial fraud detection with heterogeneous graphs and graph neural networks.">
-  <title>FraudGraph — Graph-Based Financial Fraud Detection</title>
+  <meta name="theme-color" content="#0b1019">
+  <meta name="description" content="FraudGraph financial fraud analysis dashboard">
+  <title>FraudGraph — Intelligence Dashboard</title>
   <style>
     :root {
       color-scheme: dark;
-      --bg: #080d18;
-      --surface: #0e1524;
-      --surface-raised: #121b2c;
-      --line: rgba(165, 184, 220, .13);
-      --muted: #8e9bb1;
-      --text: #edf2fb;
-      --blue: #70a7ff;
-      --violet: #ad91ff;
-      --mint: #78dfc1;
-      --amber: #f0c77d;
-      --radius: 18px;
-      --max: 1160px;
+      --canvas: #0b1019;
+      --sidebar: #0d131e;
+      --panel: #111a27;
+      --panel-raised: #151f2e;
+      --panel-soft: #0e1723;
+      --line: rgba(159, 180, 211, .12);
+      --line-strong: rgba(159, 180, 211, .2);
+      --text: #e9eff8;
+      --muted: #8d9cb1;
+      --dim: #68778c;
+      --blue: #70a5ff;
+      --blue-soft: rgba(89, 139, 227, .13);
+      --violet: #a38bfa;
+      --green: #64d5ae;
+      --green-soft: rgba(73, 193, 149, .12);
+      --amber: #eabe68;
+      --amber-soft: rgba(226, 172, 70, .12);
+      --red: #f27b86;
+      --red-soft: rgba(231, 88, 102, .12);
+      --radius: 14px;
+      --sidebar-width: 248px;
+      --shadow: 0 16px 42px rgba(0, 0, 0, .18);
     }
 
     * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; scroll-padding-top: 90px; }
+    [hidden] { display: none !important; }
+    html { min-width: 320px; scroll-behavior: smooth; scroll-padding-top: 85px; }
     body {
+      min-width: 320px;
       margin: 0;
       background:
-        radial-gradient(ellipse at 76% 5%, rgba(80, 77, 193, .15), transparent 34rem),
-        radial-gradient(ellipse at 5% 29%, rgba(40, 116, 190, .10), transparent 30rem),
-        var(--bg);
+        radial-gradient(ellipse at 68% -12%, rgba(52, 83, 150, .13), transparent 34rem),
+        var(--canvas);
       color: var(--text);
-      font: 16px/1.65 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font: 14px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       -webkit-font-smoothing: antialiased;
     }
+    button, input, select { font: inherit; }
+    button, a { -webkit-tap-highlight-color: transparent; }
     a { color: inherit; }
-    button { font: inherit; }
-    img, video { display: block; max-width: 100%; }
-    :focus-visible { outline: 2px solid var(--blue); outline-offset: 4px; }
-    .skip-link {
-      position: absolute; z-index: 20; top: 8px; left: 8px; transform: translateY(-160%);
-      border-radius: 8px; padding: 9px 14px; background: white; color: #080d18;
+    button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 2px solid var(--blue); outline-offset: 3px;
     }
-    .skip-link:focus { transform: translateY(0); }
-    .wrap { width: min(calc(100% - 48px), var(--max)); margin-inline: auto; }
+    svg { display: block; }
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
+      clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+    }
+    .app { min-height: 100vh; }
+
+    .sidebar {
+      position: fixed; inset: 0 auto 0 0; z-index: 20; display: flex; width: var(--sidebar-width);
+      flex-direction: column; border-right: 1px solid var(--line); background: rgba(13, 19, 30, .97);
+      transition: transform .24s ease;
+    }
+    .brand {
+      display: flex; height: 77px; align-items: center; gap: 11px; padding: 0 23px;
+      border-bottom: 1px solid var(--line); text-decoration: none;
+    }
+    .brand-icon {
+      width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid rgba(112,165,255,.3);
+      border-radius: 10px; color: #a7c7ff;
+      background: linear-gradient(145deg, rgba(80,130,225,.2), rgba(163,139,250,.12));
+      box-shadow: inset 0 1px rgba(255,255,255,.05);
+    }
+    .brand-icon svg { width: 19px; height: 19px; }
+    .brand-name { font-size: 15px; font-weight: 720; letter-spacing: -.045em; }
+    .brand-name small { display: block; margin-top: 1px; color: var(--dim); font-size: 9px; font-weight: 550; letter-spacing: .12em; text-transform: uppercase; }
+    .nav-group { padding: 24px 12px 0; }
+    .nav-label { padding: 0 11px 9px; color: #637187; font-size: 9px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+    .side-nav { display: grid; gap: 4px; }
+    .side-nav a {
+      display: flex; min-height: 41px; align-items: center; gap: 12px; padding: 0 11px;
+      border: 1px solid transparent; border-radius: 9px; color: #93a1b5; font-size: 12px;
+      text-decoration: none; transition: background .16s ease, color .16s ease, border-color .16s ease;
+    }
+    .side-nav a:hover { background: rgba(255,255,255,.035); color: #e5edf8; }
+    .side-nav a[aria-current="page"] { border-color: rgba(99,145,229,.13); background: var(--blue-soft); color: #b6d0ff; }
+    .side-nav svg { width: 17px; height: 17px; flex: 0 0 17px; opacity: .9; }
+    .sidebar-bottom { margin-top: auto; padding: 16px 13px 18px; }
+    .sidebar-health { padding: 13px; border: 1px solid var(--line); border-radius: 11px; background: rgba(255,255,255,.018); }
+    .sidebar-health-title { display: flex; align-items: center; gap: 8px; color: #c3cedd; font-size: 10px; font-weight: 640; }
+    .health-dot { width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: #748197; }
+    .health-dot.ok { background: var(--green); box-shadow: 0 0 10px rgba(100,213,174,.42); }
+    .health-dot.degraded { background: var(--amber); box-shadow: 0 0 10px rgba(234,190,104,.3); }
+    .health-dot.error { background: var(--red); }
+    .sidebar-health p { margin: 7px 0 0 15px; color: #77869b; font-size: 10px; }
+    .sidebar-meta { margin: 13px 3px 0; color: #59677a; font-size: 9px; }
+
+    .main { min-height: 100vh; margin-left: var(--sidebar-width); }
     .topbar {
-      position: sticky; z-index: 10; top: 0; border-bottom: 1px solid rgba(165,184,220,.09);
-      background: rgba(8,13,24,.82); backdrop-filter: blur(18px);
+      position: sticky; z-index: 15; top: 0; display: flex; height: 77px; align-items: center; justify-content: space-between;
+      gap: 18px; padding: 0 34px; border-bottom: 1px solid var(--line); background: rgba(11,16,25,.86);
+      backdrop-filter: blur(16px);
     }
-    .nav { min-height: 70px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
-    .brand { display: inline-flex; gap: 11px; align-items: center; text-decoration: none; font-weight: 720; letter-spacing: -.03em; }
-    .brand-mark {
-      width: 31px; height: 31px; display: grid; place-items: center; border: 1px solid rgba(112,167,255,.38);
-      border-radius: 10px; background: linear-gradient(145deg, rgba(112,167,255,.22), rgba(173,145,255,.1));
-      color: #a9c8ff;
+    .topbar-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .mobile-toggle {
+      display: none; width: 36px; height: 36px; align-items: center; justify-content: center;
+      border: 1px solid var(--line); border-radius: 9px; color: #b7c3d4; background: transparent; cursor: pointer;
     }
-    .brand-mark svg { width: 19px; }
-    .nav-links { display: flex; align-items: center; gap: 26px; }
-    .nav-links a { color: #aab6c9; font-size: 13px; text-decoration: none; transition: color .18s ease; }
-    .nav-links a:hover { color: white; }
-    .nav-links .repo-link { color: var(--text); border: 1px solid var(--line); border-radius: 9px; padding: 7px 12px; }
+    .mobile-toggle svg { width: 18px; }
+    .page-title { margin: 0; font-size: 17px; font-weight: 650; letter-spacing: -.035em; }
+    .top-subtitle { margin-top: 2px; color: #75849a; font-size: 10px; }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .model-badge { display: inline-flex; height: 29px; align-items: center; gap: 7px; padding: 0 10px; border: 1px solid rgba(125,155,217,.2); border-radius: 8px; color: #bed0f3; background: rgba(77,111,177,.09); font-size: 10px; font-weight: 650; }
+    .model-badge svg { width: 13px; height: 13px; color: #9dbdff; }
+    .top-health { display: flex; align-items: center; gap: 7px; color: #8998ac; font-size: 10px; white-space: nowrap; }
+    .top-health .health-dot { width: 6px; height: 6px; flex-basis: 6px; }
+    .content { width: min(100%, 1440px); margin: 0 auto; padding: 28px 34px 46px; }
+    .welcome { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; margin-bottom: 19px; }
+    .welcome h2 { margin: 0; font-size: 21px; font-weight: 660; letter-spacing: -.045em; }
+    .welcome p { margin: 4px 0 0; color: var(--muted); font-size: 11px; }
+    .session-label { display: inline-flex; align-items: center; gap: 7px; color: #738299; font-size: 9px; white-space: nowrap; }
+    .session-label svg { width: 13px; height: 13px; }
 
-    .hero { position: relative; overflow: hidden; padding: 91px 0 84px; border-bottom: 1px solid rgba(165,184,220,.08); }
-    .hero-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(310px, .76fr); align-items: center; gap: 50px; }
-    .eyebrow {
-      display: inline-flex; align-items: center; gap: 9px; color: #adc8f6; text-transform: uppercase;
-      font-size: 11px; font-weight: 700; letter-spacing: .16em;
+    .overview-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; }
+    .stat-card {
+      position: relative; overflow: hidden; min-height: 113px; padding: 16px 17px;
+      border: 1px solid var(--line); border-radius: 12px; background: linear-gradient(140deg, rgba(20,30,45,.95), rgba(15,23,35,.93));
+      box-shadow: 0 8px 26px rgba(0,0,0,.09); transition: transform .18s ease, border-color .18s ease;
     }
-    .eyebrow::before { content: ""; width: 19px; height: 1px; background: linear-gradient(90deg, var(--blue), var(--violet)); }
-    h1 { margin: 20px 0 3px; font-size: clamp(54px, 8vw, 88px); line-height: .98; letter-spacing: -.075em; font-weight: 740; }
-    .hero h2 { margin: 15px 0 16px; color: #c4d2e7; font-size: clamp(19px, 2.4vw, 25px); letter-spacing: -.035em; font-weight: 510; }
-    .hero-copy { max-width: 650px; color: #a3b0c5; font-size: 16px; }
-    .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 29px; }
-    .button {
-      display: inline-flex; min-height: 45px; align-items: center; justify-content: center; gap: 9px;
-      border: 1px solid var(--line); border-radius: 10px; padding: 0 16px; text-decoration: none; font-size: 13px; font-weight: 650;
-      transition: transform .18s ease, border-color .18s ease, background .18s ease;
-    }
-    .button:hover { transform: translateY(-2px); border-color: rgba(145,177,255,.5); }
-    .button-primary { border-color: transparent; background: linear-gradient(110deg, #568ff0, #8971e8); color: #fff; box-shadow: 0 10px 28px rgba(77,104,219,.2); }
-    .button-secondary { background: rgba(255,255,255,.025); color: #d7e0ef; }
-    .button svg { width: 15px; height: 15px; }
-    .hero-note { display: flex; align-items: center; gap: 9px; margin-top: 25px; color: #8492a8; font-size: 12px; }
-    .hero-note span { width: 7px; height: 7px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 12px rgba(120,223,193,.5); }
+    .stat-card:hover { transform: translateY(-2px); border-color: var(--line-strong); }
+    .stat-card::after { position: absolute; content: ""; top: -30px; right: -25px; width: 90px; height: 90px; border-radius: 50%; opacity: .35; filter: blur(1px); }
+    .stat-card.total::after { background: radial-gradient(circle, rgba(104,156,246,.2), transparent 70%); }
+    .stat-card.approved::after { background: radial-gradient(circle, rgba(100,213,174,.19), transparent 70%); }
+    .stat-card.flagged::after { background: radial-gradient(circle, rgba(234,190,104,.18), transparent 70%); }
+    .stat-card.declined::after { background: radial-gradient(circle, rgba(242,123,134,.19), transparent 70%); }
+    .stat-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #8b9ab0; font-size: 10px; }
+    .stat-icon { width: 27px; height: 27px; display: grid; place-items: center; border-radius: 8px; background: rgba(112,165,255,.1); color: #8db4ff; }
+    .stat-icon svg { width: 15px; height: 15px; }
+    .approved .stat-icon { background: var(--green-soft); color: var(--green); }
+    .flagged .stat-icon { background: var(--amber-soft); color: var(--amber); }
+    .declined .stat-icon { background: var(--red-soft); color: var(--red); }
+    .stat-value { margin-top: 8px; font-size: 25px; font-weight: 670; letter-spacing: -.055em; line-height: 1; font-variant-numeric: tabular-nums; }
+    .stat-foot { margin-top: 7px; color: #637187; font-size: 9px; }
 
-    .graph-panel {
-      position: relative; min-height: 350px; overflow: hidden; display: grid; place-items: center;
-      border: 1px solid rgba(147,170,213,.16); border-radius: 24px;
-      background: linear-gradient(145deg, rgba(27,39,65,.72), rgba(13,20,34,.48));
-      box-shadow: 0 28px 80px rgba(0,0,0,.24), inset 0 1px rgba(255,255,255,.035);
+    .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-bottom: 14px; }
+    .section-heading h2 { margin: 0; font-size: 14px; font-weight: 650; letter-spacing: -.025em; }
+    .section-heading p { margin: 3px 0 0; color: #77869b; font-size: 10px; }
+    .section-eyebrow { color: #6f8097; font-size: 9px; font-weight: 640; letter-spacing: .11em; text-transform: uppercase; }
+    .analysis-grid { display: grid; grid-template-columns: minmax(0,1.04fr) minmax(310px,.96fr); align-items: start; gap: 13px; margin-top: 25px; }
+    .panel { border: 1px solid var(--line); border-radius: var(--radius); background: linear-gradient(145deg, rgba(18,27,41,.97), rgba(14,22,34,.97)); box-shadow: var(--shadow); }
+    .panel-header { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 57px; padding: 12px 17px; border-bottom: 1px solid var(--line); }
+    .panel-title-wrap { min-width: 0; }
+    .panel-title { margin: 0; font-size: 12px; font-weight: 650; letter-spacing: -.015em; }
+    .panel-subtitle { margin-top: 3px; color: #748399; font-size: 9px; }
+    .panel-icon { width: 29px; height: 29px; display: grid; place-items: center; border: 1px solid rgba(115,155,228,.17); border-radius: 8px; color: #98baff; background: rgba(83,126,207,.1); }
+    .panel-icon svg { width: 15px; height: 15px; }
+    .form-body { padding: 16px 17px 17px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px 12px; }
+    .field { min-width: 0; }
+    .field.full { grid-column: 1 / -1; }
+    .field label { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 5px; color: #c2ccda; font-size: 10px; font-weight: 560; }
+    .field label small { color: #68778c; font-size: 9px; font-weight: 450; }
+    .field input, .field select {
+      display: block; width: 100%; height: 37px; border: 1px solid rgba(158,179,210,.15); border-radius: 8px;
+      padding: 0 10px; color: #e3eaf4; background: #0d1521; font-size: 11px; transition: border-color .16s ease, box-shadow .16s ease;
     }
-    .graph-panel::before, .graph-panel::after { content: ""; position: absolute; border: 1px solid rgba(111,153,232,.12); border-radius: 50%; }
-    .graph-panel::before { width: 260px; height: 260px; }
-    .graph-panel::after { width: 355px; height: 355px; }
-    .graph-art { position: relative; z-index: 1; width: min(94%, 420px); }
-    .graph-art .edge { stroke: #536e9f; stroke-opacity: .55; stroke-width: 1.3; }
-    .graph-art .edge-hot { stroke: #a28bff; stroke-opacity: .8; stroke-width: 1.6; }
-    .graph-art .node { stroke: rgba(231,239,255,.7); stroke-width: 1.4; }
-    .graph-art .node-tx { fill: #629ef0; }
-    .graph-art .node-card { fill: #aa8af4; }
-    .graph-art .node-device { fill: #67cdb8; }
-    .graph-art .node-merchant { fill: #e2ba76; }
-    .graph-label {
-      position: absolute; z-index: 2; border: 1px solid rgba(156,178,218,.17); border-radius: 7px;
-      padding: 4px 8px; color: #b6c4d9; background: rgba(10,16,29,.77); font: 10px ui-monospace, SFMono-Regular, Menlo, monospace;
+    .field input::placeholder { color: #526176; }
+    .field input:hover, .field select:hover { border-color: rgba(158,179,210,.27); }
+    .field input:focus, .field select:focus { border-color: rgba(112,165,255,.65); box-shadow: 0 0 0 3px rgba(112,165,255,.09); outline: none; }
+    .field-error { min-height: 0; margin-top: 4px; color: var(--red); font-size: 9px; }
+    .field-error:empty { display: none; }
+    .input-note { margin: 12px 0 0; color: #69788d; font-size: 9px; }
+    .form-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; padding-top: 13px; border-top: 1px solid var(--line); }
+    .privacy-note { display: flex; align-items: flex-start; gap: 7px; max-width: 220px; color: #75849a; font-size: 9px; }
+    .privacy-note svg { flex: 0 0 13px; width: 13px; height: 13px; color: #7893be; }
+    .primary-button {
+      display: inline-flex; min-height: 37px; align-items: center; justify-content: center; gap: 8px; cursor: pointer;
+      border: 1px solid rgba(117,154,235,.35); border-radius: 8px; padding: 0 14px;
+      color: #f2f6ff; background: linear-gradient(105deg, #3979d5, #6558bf);
+      box-shadow: 0 5px 16px rgba(67,100,192,.16); font-size: 10px; font-weight: 650;
+      transition: transform .16s ease, filter .16s ease, opacity .16s ease;
     }
-    .graph-label.l1 { top: 20%; left: 8%; }
-    .graph-label.l2 { top: 18%; right: 9%; }
-    .graph-label.l3 { bottom: 18%; left: 11%; }
-    .graph-label.l4 { right: 8%; bottom: 20%; }
-    .hero-meta { display: flex; gap: 22px; margin-top: 28px; color: #8f9eb5; font-size: 11px; }
-    .hero-meta span { display: flex; align-items: center; gap: 7px; }
-    .hero-meta i { width: 6px; height: 6px; border-radius: 50%; background: #7489aa; }
+    .primary-button:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.11); }
+    .primary-button:disabled { opacity: .65; cursor: wait; }
+    .primary-button svg { width: 14px; height: 14px; }
+    .button-spinner { display: none; width: 13px; height: 13px; border: 2px solid rgba(255,255,255,.3); border-top-color: white; border-radius: 50%; animation: spin .7s linear infinite; }
+    .primary-button[aria-busy="true"] .button-spinner { display: inline-block; }
+    .primary-button[aria-busy="true"] .button-icon { display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-    section { padding: 88px 0; }
-    .section-heading { max-width: 700px; margin-bottom: 34px; }
-    .section-heading h2 { margin: 11px 0 10px; font-size: clamp(30px, 4vw, 43px); letter-spacing: -.055em; line-height: 1.12; }
-    .section-heading p { max-width: 650px; margin: 0; color: var(--muted); font-size: 15px; }
-    .section-kicker { color: var(--blue); font-size: 11px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; }
-    .problem-section { border-bottom: 1px solid rgba(165,184,220,.08); }
-    .problem-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .problem-card, .architecture-card, .metric-card, .status-card, .research-card, .stack-card {
-      border: 1px solid var(--line); border-radius: var(--radius); background: linear-gradient(145deg, rgba(19,29,47,.88), rgba(13,20,33,.88));
+    .results-panel { min-height: 391px; }
+    .result-content { min-height: 333px; padding: 16px; }
+    .empty-state { min-height: 295px; display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 25px 20px; text-align: center; }
+    .empty-graphic { width: 64px; height: 64px; display: grid; place-items: center; margin-bottom: 15px; border: 1px solid rgba(119,153,213,.15); border-radius: 18px; color: #89a9df; background: radial-gradient(circle at 30% 20%, rgba(95,142,225,.13), rgba(54,73,112,.04)); }
+    .empty-graphic svg { width: 28px; height: 28px; }
+    .empty-state h3 { margin: 0; color: #cbd5e3; font-size: 12px; font-weight: 620; }
+    .empty-state p { max-width: 240px; margin: 6px 0 0; color: #78879b; font-size: 10px; }
+    .request-error { display: none; margin: 0 0 13px; padding: 10px 11px; border: 1px solid rgba(242,123,134,.21); border-radius: 8px; color: #f1a0a7; background: rgba(231,88,102,.07); font-size: 10px; overflow-wrap: anywhere; }
+    .request-error.visible { display: block; }
+    .result-data[hidden] { display: none; }
+    .result-summary { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; padding: 14px; border: 1px solid var(--line); border-radius: 11px; background: rgba(255,255,255,.018); }
+    .result-score-label { color: #8493a8; font-size: 9px; }
+    .result-score { margin-top: 2px; font-size: 30px; font-weight: 680; letter-spacing: -.06em; line-height: 1.15; font-variant-numeric: tabular-nums; }
+    .result-decision { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line-strong); border-radius: 999px; padding: 6px 9px; color: #bac6d6; background: rgba(255,255,255,.025); font-size: 9px; font-weight: 700; letter-spacing: .04em; }
+    .result-decision::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #8492a8; }
+    .result-decision.approve { border-color: rgba(100,213,174,.23); color: var(--green); background: var(--green-soft); }
+    .result-decision.approve::before { background: var(--green); }
+    .result-decision.flag { border-color: rgba(234,190,104,.23); color: var(--amber); background: var(--amber-soft); }
+    .result-decision.flag::before { background: var(--amber); }
+    .result-decision.decline { border-color: rgba(242,123,134,.23); color: var(--red); background: var(--red-soft); }
+    .result-decision.decline::before { background: var(--red); }
+    .result-meta { display: flex; gap: 16px; margin-top: 11px; color: #75849a; font-size: 9px; }
+    .result-meta strong { color: #c1ccda; font-weight: 570; }
+    .result-block { margin-top: 17px; }
+    .result-block-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #bdc9d8; font-size: 10px; font-weight: 620; }
+    .result-block-heading span { color: #718198; font-size: 9px; font-weight: 450; }
+    .reason-list { display: grid; gap: 7px; margin: 9px 0 0; padding: 0; list-style: none; }
+    .reason-item { padding: 9px 10px; border: 1px solid rgba(157,178,210,.1); border-radius: 8px; background: rgba(255,255,255,.017); }
+    .reason-factor { color: #c8d3e2; font-size: 10px; overflow-wrap: anywhere; }
+    .reason-meta { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 6px; }
+    .reason-chip { border-radius: 5px; padding: 2px 6px; color: #98add0; background: rgba(91,124,182,.1); font: 8px ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .reason-chip.edge { color: #b5a2fa; background: rgba(154,128,235,.1); }
+    .result-empty-note { margin: 8px 0 0; color: #78879b; font-size: 9px; }
+    .result-loading { display: none; min-height: 295px; align-items: center; justify-content: center; flex-direction: column; color: #94a4bc; font-size: 10px; }
+    .result-loading.visible { display: flex; }
+    .loading-ring { width: 29px; height: 29px; margin-bottom: 12px; border: 2px solid rgba(112,165,255,.16); border-top-color: #83b0ff; border-radius: 50%; animation: spin .7s linear infinite; }
+
+    .lower-grid { display: grid; grid-template-columns: minmax(0,1.25fr) minmax(260px,.75fr); gap: 13px; margin-top: 14px; }
+    .table-wrap { min-width: 0; overflow-x: auto; }
+    .lower-grid > .panel { min-width: 0; }
+    .metrics-table { width: 100%; min-width: 610px; border-collapse: collapse; text-align: left; }
+    .metrics-table th, .metrics-table td { padding: 10px 13px; border-bottom: 1px solid rgba(159,180,211,.08); }
+    .metrics-table tr:last-child td { border-bottom: 0; }
+    .metrics-table th { color: #728198; background: rgba(255,255,255,.012); font-size: 8px; font-weight: 620; }
+    .metrics-table td { color: #b7c3d2; font-size: 9px; font-variant-numeric: tabular-nums; }
+    .metrics-table td:first-child { color: #d3ddeb; font-size: 10px; font-weight: 570; }
+    .heldout-tag { display: inline-flex; align-items: center; gap: 5px; border: 1px solid rgba(100,213,174,.17); border-radius: 999px; padding: 4px 7px; color: #82d4b8; font-size: 8px; }
+    .heldout-tag::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: #64d5ae; }
+    .table-note { margin: 0; padding: 10px 13px; border-top: 1px solid var(--line); color: #748399; font-size: 9px; }
+    .tech-content { padding: 15px; }
+    .tech-tags { display: flex; flex-wrap: wrap; gap: 7px; }
+    .tech-tag { display: inline-flex; align-items: center; min-height: 26px; border: 1px solid rgba(156,178,210,.12); border-radius: 7px; padding: 0 8px; color: #aab9cf; background: rgba(255,255,255,.022); font-size: 9px; }
+    .tech-tag.graph { border-color: rgba(127,157,222,.18); color: #b6c8ef; background: rgba(91,124,182,.07); }
+    .tech-note { margin: 13px 0 0; color: #6f7e92; font-size: 9px; }
+    .insights-panel { grid-column: 1 / -1; }
+    .insights-chart-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 13px; }
+    .insight-chart-card { min-width: 0; padding: 12px 10px 9px; border: 1px solid rgba(159,180,211,.1); border-radius: 10px; background: rgba(7,13,22,.34); }
+    .insight-chart-card h3 { margin: 0 0 2px; color: #d3deec; font-size: 10px; font-weight: 640; }
+    .insight-chart-card p { margin: 0 0 8px; color: #738299; font-size: 8px; }
+    .metric-chart { display: block; width: 100%; height: auto; overflow: visible; }
+    .metric-chart-title { fill: #dce5f1; font: 600 12px ui-sans-serif, system-ui, sans-serif; }
+    .metric-chart-desc { fill: #92a1b6; font: 10px ui-sans-serif, system-ui, sans-serif; }
+    .metric-chart-model { fill: #c3cedd; font: 9px ui-sans-serif, system-ui, sans-serif; }
+    .metric-chart-value { fill: #e2eaf5; font: 9px ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .metric-chart-tick { fill: #8492a8; font: 8px ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .metric-chart-gridline { stroke: rgba(159,180,211,.13); stroke-width: 1; }
+    .metric-chart-track { fill: rgba(138,156,187,.1); }
+    .metric-chart-bar { rx: 4; }
+    .insight-interpretation { margin: 0 13px 12px; padding: 12px; border: 1px solid rgba(127,157,222,.13); border-radius: 10px; background: linear-gradient(120deg, rgba(66,94,149,.09), rgba(115,91,173,.055)); }
+    .interpretation-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 9px; }
+    .interpretation-heading h3 { margin: 0; color: #d6e0ef; font-size: 10px; font-weight: 650; }
+    .selected-model-badge { display: inline-flex; align-items: center; gap: 5px; border: 1px solid rgba(112,165,255,.25); border-radius: 999px; padding: 4px 7px; color: #b8d0ff; background: rgba(89,139,227,.1); font-size: 8px; font-weight: 620; white-space: nowrap; }
+    .selected-model-badge::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--blue); }
+    .interpretation-list { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 7px 12px; margin: 0; padding: 0; list-style: none; }
+    .interpretation-list li { position: relative; padding-left: 11px; color: #9cabc0; font-size: 9px; }
+    .interpretation-list li::before { position: absolute; top: .55em; left: 0; width: 4px; height: 4px; border-radius: 50%; background: #8199c4; content: ""; }
+    .metric-definitions { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; margin: 0 13px 12px; }
+    .metric-definition { padding: 9px 10px; border: 1px solid rgba(159,180,211,.09); border-radius: 8px; background: rgba(255,255,255,.012); }
+    .metric-definition dt { margin-bottom: 3px; color: #bfccde; font-size: 9px; font-weight: 620; }
+    .metric-definition dd { margin: 0; color: #7e8da2; font-size: 8px; line-height: 1.5; }
+    .selected-row-label { display: inline-flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+    .selected-row-badge { border: 1px solid rgba(112,165,255,.2); border-radius: 999px; padding: 2px 5px; color: #adc8fa; background: rgba(89,139,227,.08); font-size: 7px; font-weight: 600; }
+    .history-panel { margin-top: 14px; scroll-margin-top: 91px; }
+    .history-total { display: grid; gap: 2px; min-width: 88px; text-align: right; }
+    .history-total strong { color: #dce7f5; font-size: 16px; font-weight: 670; font-variant-numeric: tabular-nums; }
+    .history-total span { color: #78889e; font-size: 8px; }
+    .history-toolbar { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding: 13px 15px; border-bottom: 1px solid var(--line); }
+    .history-filters { display: flex; flex: 1; align-items: flex-end; gap: 9px; }
+    .history-control { display: grid; gap: 4px; min-width: 0; }
+    .history-control label { color: #8998ad; font-size: 8px; }
+    .history-control input, .history-control select { height: 32px; border: 1px solid rgba(158,179,210,.15); border-radius: 7px; padding: 0 9px; color: #dce5f1; background: #0d1521; font-size: 9px; }
+    .history-control input { width: min(260px, 35vw); }
+    .history-control select { min-width: 130px; }
+    .history-actions { display: flex; align-items: center; gap: 7px; }
+    .history-actions .secondary-button { min-height: 32px; }
+    .history-message { display: none; padding: 25px 16px; color: #8d9cb1; text-align: center; font-size: 10px; }
+    .history-message.visible { display: block; }
+    .history-message.error { color: #ef9ca4; }
+    .history-table-wrap { min-width: 0; overflow-x: auto; }
+    .history-table { width: 100%; min-width: 790px; border-collapse: collapse; text-align: left; }
+    .history-table th, .history-table td { padding: 10px 12px; border-bottom: 1px solid rgba(159,180,211,.08); white-space: nowrap; }
+    .history-table tr:last-child td { border-bottom: 0; }
+    .history-table th { color: #78879c; background: rgba(255,255,255,.014); font-size: 8px; font-weight: 620; }
+    .history-table td { color: #bac6d6; font-size: 9px; font-variant-numeric: tabular-nums; }
+    .history-table td:first-child { color: #d2deed; font-weight: 570; }
+    .history-decision { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 4px 7px; font-size: 8px; font-weight: 650; }
+    .history-decision::before { width: 5px; height: 5px; border-radius: 50%; background: currentColor; content: ""; }
+    .history-decision.approve { color: var(--green); background: var(--green-soft); }
+    .history-decision.flag { color: var(--amber); background: var(--amber-soft); }
+    .history-decision.decline { color: var(--red); background: var(--red-soft); }
+    .history-report-button { min-height: 26px; border: 1px solid rgba(112,165,255,.2); border-radius: 6px; padding: 0 8px; color: #b7cefa; background: rgba(89,139,227,.08); cursor: pointer; font-size: 8px; }
+    .history-report-button:hover { border-color: rgba(112,165,255,.4); background: rgba(89,139,227,.15); }
+    .history-pagination { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 14px; border-top: 1px solid var(--line); }
+    .history-page-summary { color: #7e8da2; font-size: 9px; }
+    .history-page-controls { display: flex; align-items: center; gap: 7px; }
+    .history-page-controls .secondary-button { min-height: 28px; }
+    .history-page-controls button:disabled { opacity: .42; cursor: not-allowed; }
+    .report-dialog { width: min(800px, calc(100vw - 28px)); max-width: 800px; max-height: min(90vh, 900px); overflow: auto; border: 1px solid var(--line-strong); border-radius: 14px; padding: 0; color: var(--text); background: #101927; box-shadow: 0 28px 90px rgba(0,0,0,.52); }
+    .report-dialog::backdrop { background: rgba(3,7,13,.75); backdrop-filter: blur(4px); }
+    .report-dialog-header { position: sticky; z-index: 1; top: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); background: rgba(16,25,39,.96); }
+    .report-dialog-title { margin: 0; font-size: 12px; font-weight: 650; }
+    .report-dialog-actions { display: flex; gap: 7px; }
+    .report-close { min-height: 30px; border: 1px solid var(--line-strong); border-radius: 7px; padding: 0 9px; color: #bdc9d9; background: transparent; cursor: pointer; font-size: 9px; }
+    .report-loading, .report-error { padding: 34px 18px; color: #91a0b5; text-align: center; font-size: 10px; }
+    .report-error { color: #ef9ca4; }
+    .report-document { margin: 22px; padding: 30px; border: 1px solid rgba(159,180,211,.12); border-radius: 10px; background: #f9fbff; color: #152034; }
+    .report-document[hidden] { display: none !important; }
+    .report-brand { color: #315d9c; font-size: 9px; font-weight: 750; letter-spacing: .13em; text-transform: uppercase; }
+    .report-document h2 { margin: 7px 0 4px; color: #111d31; font-size: 23px; letter-spacing: -.035em; }
+    .report-generated { margin: 0; color: #68778c; font-size: 9px; }
+    .report-disclaimer { margin: 17px 0; border-left: 3px solid #597db5; padding: 10px 12px; color: #394b65; background: #edf3fc; font-size: 10px; }
+    .report-section { margin-top: 20px; }
+    .report-section h3 { margin: 0 0 9px; color: #1d2c44; font-size: 12px; }
+    .report-fields { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; margin: 0; }
+    .report-field { min-width: 0; padding: 9px; border: 1px solid #e1e7f0; border-radius: 7px; }
+    .report-field dt { color: #6a788d; font-size: 8px; }
+    .report-field dd { margin: 3px 0 0; color: #18263c; font-size: 10px; font-weight: 620; overflow-wrap: anywhere; }
+    .report-reasons, .report-evidence { display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
+    .report-reasons li, .report-evidence li { padding: 9px 10px; border: 1px solid #e1e7f0; border-radius: 7px; color: #24334b; font-size: 9px; overflow-wrap: anywhere; }
+    .report-subtle { color: #6a788d; }
+    .report-footer { margin-top: 21px; padding-top: 10px; border-top: 1px solid #dfe5ed; color: #718096; font-size: 8px; }
+    .graph-view { min-width: 0; padding: 10px 10px 0; }
+    .graph-svg { display: block; width: 100%; height: auto; overflow: visible; }
+    .graph-svg.graph-enter { animation: graph-reveal .38s ease-out both; }
+    @keyframes graph-reveal {
+      from { opacity: 0; transform: translateY(5px) scale(.985); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
     }
-    .problem-card { min-height: 210px; padding: 25px; }
-    .problem-card .number { color: #7688a7; font: 12px ui-monospace, monospace; }
-    .problem-card h3 { margin: 28px 0 8px; font-size: 19px; letter-spacing: -.025em; }
-    .problem-card p { margin: 0; max-width: 480px; color: #9aa8bd; font-size: 14px; }
-    .problem-card.graph-card { background: linear-gradient(135deg, rgba(59,76,145,.24), rgba(21,29,49,.9) 60%); }
+    .graph-edge { stroke: #7185a6; stroke-width: 1.5; stroke-dasharray: 4 4; }
+    .graph-edge-label-bg { fill: #111a27; stroke: rgba(159,180,211,.14); stroke-width: 1; }
+    .graph-edge-label { fill: #b5c3d7; font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; text-anchor: middle; }
+    .graph-node-card { fill: rgba(18,30,44,.96); stroke: rgba(100,213,174,.34); stroke-width: 1.3; }
+    .graph-node-card.card { stroke: rgba(163,139,250,.38); }
+    .graph-node-accent { fill: #64d5ae; }
+    .graph-node-accent.card { fill: #a38bfa; }
+    .graph-node-title { fill: #dce7f3; font: 600 12px ui-sans-serif, system-ui, sans-serif; }
+    .graph-node-id { fill: #8d9cb1; font: 9px ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .graph-node-evidence { fill: #aab9cf; font: 9px ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .graph-transaction-halo { fill: rgba(112,165,255,.07); stroke: rgba(112,165,255,.2); stroke-width: 1; }
+    .graph-transaction-node { fill: #192945; stroke: #70a5ff; stroke-width: 1.5; }
+    .graph-transaction-label { fill: #e4edfb; font: 700 11px ui-sans-serif, system-ui, sans-serif; text-anchor: middle; }
+    .graph-transaction-id { fill: #a9c5f3; font: 9px ui-monospace, SFMono-Regular, Menlo, monospace; text-anchor: middle; }
+    .graph-empty { min-height: 158px; display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 22px 18px; text-align: center; }
+    .graph-empty-mark { width: 35px; height: 35px; display: grid; place-items: center; margin-bottom: 9px; border: 1px solid rgba(119,153,213,.14); border-radius: 11px; color: #8398ba; background: rgba(91,124,182,.07); }
+    .graph-empty-mark svg { width: 17px; height: 17px; }
+    .graph-empty h3 { margin: 0; color: #c5d0df; font-size: 10px; font-weight: 620; }
+    .graph-empty p { max-width: 270px; margin: 4px 0 0; color: #77869b; font-size: 9px; }
+    .graph-legend { display: flex; flex-wrap: wrap; gap: 7px 12px; padding: 7px 15px 11px; border-top: 1px solid rgba(159,180,211,.08); }
+    .graph-legend-item { display: inline-flex; align-items: center; gap: 6px; color: #8392a7; font-size: 8px; }
+    .graph-legend-swatch { width: 8px; height: 8px; border: 1px solid currentColor; border-radius: 50%; }
+    .graph-legend-swatch.transaction { color: var(--blue); background: rgba(112,165,255,.28); }
+    .graph-legend-swatch.device { color: var(--green); background: rgba(100,213,174,.25); }
+    .graph-legend-swatch.card { color: var(--violet); background: rgba(163,139,250,.25); }
+    .graph-legend-swatch.relationship { width: 12px; height: 2px; border: 0; border-radius: 0; background: #8497b5; }
 
-    .architecture { border-bottom: 1px solid rgba(165,184,220,.08); }
-    .pipeline {
-      display: grid; grid-template-columns: repeat(6, minmax(0,1fr)); gap: 10px; margin: 37px 0 17px;
-      align-items: stretch;
+    .api-panel { margin-top: 14px; scroll-margin-top: 91px; }
+    .api-body { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 16px; padding: 14px 16px; }
+    .api-state { display: flex; align-items: flex-start; gap: 10px; }
+    .api-state .health-dot { margin-top: 5px; }
+    .api-state h3 { margin: 0; font-size: 10px; font-weight: 620; }
+    .api-state p { margin: 3px 0 0; color: #7e8da2; font-size: 9px; }
+    .api-actions { display: flex; align-items: center; gap: 9px; }
+    .api-endpoint { color: #72829a; font: 9px ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .secondary-button { min-height: 30px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line-strong); border-radius: 7px; padding: 0 9px; color: #bdc9d9; background: rgba(255,255,255,.025); cursor: pointer; font-size: 9px; transition: background .15s ease, border-color .15s ease; }
+    .secondary-button:hover:not(:disabled) { border-color: rgba(112,165,255,.35); background: rgba(112,165,255,.08); }
+    .secondary-button:disabled { opacity: .6; cursor: wait; }
+    .secondary-button svg { width: 12px; height: 12px; }
+    .api-error { display: none; margin: 0 16px 13px; padding: 8px 10px; border: 1px solid rgba(242,123,134,.18); border-radius: 7px; color: #e89ba2; background: rgba(231,88,102,.06); font-size: 9px; overflow-wrap: anywhere; }
+    .api-error.visible { display: block; }
+    .footer { display: flex; justify-content: space-between; gap: 10px; padding: 21px 2px 0; color: #657388; font-size: 9px; }
+
+    .scrim { display: none; }
+    @media (max-width: 1120px) {
+      :root { --sidebar-width: 220px; }
+      .content { padding-inline: 23px; }
+      .topbar { padding-inline: 23px; }
+      .analysis-grid { grid-template-columns: minmax(0,1fr) minmax(290px,.92fr); }
+      .overview-grid { gap: 9px; }
+      .stat-card { padding-inline: 13px; }
+      .lower-grid { grid-template-columns: minmax(0, 1fr); }
     }
-    .pipeline-step {
-      position: relative; min-height: 131px; padding: 17px 14px 14px; border: 1px solid var(--line); border-radius: 14px;
-      background: rgba(16,24,39,.84);
-    }
-    .pipeline-step:not(:last-child)::after {
-      content: "›"; position: absolute; z-index: 2; right: -11px; top: 48px; color: #8899bb; font-size: 20px;
-    }
-    .step-number { color: #7385a1; font: 10px ui-monospace, monospace; }
-    .step-icon { width: 23px; height: 23px; margin: 13px 0 10px; color: #9fc2ff; }
-    .pipeline-step h3 { margin: 0; font-size: 12px; line-height: 1.45; font-weight: 620; }
-    .arch-details { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 22px; }
-    .architecture-card { padding: 20px; }
-    .architecture-card h3 { margin: 0 0 7px; font-size: 14px; }
-    .architecture-card p { margin: 0; color: #9ba9bd; font-size: 12px; line-height: 1.7; }
-    .architecture-card strong { color: #dce8ff; font-weight: 600; }
-    .architecture-note { margin: 17px 2px 0; color: #7f8ca2; font-size: 11px; }
-
-    .metrics-section { border-bottom: 1px solid rgba(165,184,220,.08); background: linear-gradient(180deg, rgba(13,20,33,.28), transparent); }
-    .metrics-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, .85fr); gap: 18px; align-items: stretch; }
-    .metric-card { padding: 24px; }
-    .metric-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 24px; }
-    .metric-top h3 { margin: 0; font-size: 16px; }
-    .metric-top p { margin: 4px 0 0; color: #8290a6; font-size: 11px; }
-    .test-badge { border: 1px solid rgba(120,223,193,.22); border-radius: 999px; padding: 5px 8px; color: #8de0c8; background: rgba(71,170,141,.08); font-size: 9px; white-space: nowrap; }
-    .metric-tabs { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 25px; }
-    .metric-tab {
-      cursor: pointer; border: 1px solid rgba(154,174,210,.16); border-radius: 8px; padding: 7px 10px;
-      background: transparent; color: #96a4b9; font-size: 10px; transition: .18s ease;
-    }
-    .metric-tab:hover, .metric-tab[aria-pressed="true"] { border-color: rgba(124,160,239,.48); background: rgba(82,119,204,.16); color: #e1eaff; }
-    .chart { display: grid; gap: 19px; }
-    .chart-row { display: grid; grid-template-columns: minmax(106px, 1.05fr) minmax(0, 2fr) 60px; align-items: center; gap: 12px; }
-    .chart-name { color: #b6c2d5; font-size: 11px; line-height: 1.35; }
-    .chart-track { height: 9px; overflow: hidden; border-radius: 99px; background: rgba(138,156,187,.11); }
-    .chart-fill { height: 100%; width: var(--value); border-radius: inherit; background: linear-gradient(90deg, #528ce9, #a18bff); transition: width .45s cubic-bezier(.2,.8,.2,1); }
-    .chart-row:first-child .chart-fill { background: linear-gradient(90deg, #68d0b6, #79a8ff); }
-    .chart-value { color: #e3eaf5; text-align: right; font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; }
-    .chart-axis { display: flex; justify-content: space-between; margin: 8px 72px 0 126px; color: #66748c; font: 9px ui-monospace, monospace; }
-    .metric-interpretation { display: flex; flex-direction: column; justify-content: space-between; padding: 24px; }
-    .metric-interpretation .callout-mark { color: var(--violet); font-size: 22px; line-height: 1; }
-    .metric-interpretation h3 { margin: 17px 0 9px; font-size: 20px; letter-spacing: -.035em; }
-    .metric-interpretation p { margin: 0; color: #9aa8bd; font-size: 13px; }
-    .metric-interpretation .selection { margin-top: 25px; padding: 14px; border-left: 2px solid var(--violet); border-radius: 0 9px 9px 0; background: rgba(155,132,240,.08); color: #b9c5d8; font-size: 11px; }
-    .metric-table-wrap { margin-top: 17px; overflow-x: auto; border: 1px solid var(--line); border-radius: 13px; }
-    .metric-table { width: 100%; border-collapse: collapse; min-width: 650px; text-align: left; }
-    .metric-table th, .metric-table td { padding: 12px 15px; border-bottom: 1px solid rgba(165,184,220,.09); }
-    .metric-table tr:last-child td { border-bottom: 0; }
-    .metric-table th { color: #8795aa; background: rgba(255,255,255,.018); font-size: 10px; font-weight: 600; }
-    .metric-table td { color: #d2dced; font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; }
-    .metric-table td:first-child { font: 12px ui-sans-serif, system-ui, sans-serif; font-weight: 600; }
-    .metric-caption { margin: 10px 2px 0; color: #76849a; font-size: 10px; }
-
-    .media-section { border-bottom: 1px solid rgba(165,184,220,.08); }
-    .media-grid { display: grid; grid-template-columns: 1.2fr .8fr; align-items: start; gap: 18px; }
-    .media-frame { overflow: hidden; border: 1px solid rgba(157,178,217,.16); border-radius: 15px; background: #05080e; box-shadow: 0 20px 55px rgba(0,0,0,.22); }
-    .media-frame img { width: 100%; height: auto; }
-    .media-frame video { width: 100%; aspect-ratio: 16/9; background: #05080e; }
-    .media-caption { padding: 13px 15px; border-top: 1px solid rgba(157,178,217,.11); color: #8d9bb1; font-size: 11px; }
-    .media-caption strong { color: #dbe5f4; font-weight: 600; }
-    .demo-column .section-heading { margin-bottom: 22px; }
-
-    .status-section { border-bottom: 1px solid rgba(165,184,220,.08); }
-    .status-card { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 18px; padding: 24px; }
-    .status-main { display: flex; align-items: flex-start; gap: 13px; }
-    .status-icon { flex: 0 0 34px; width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid rgba(240,199,125,.24); border-radius: 10px; color: var(--amber); background: rgba(240,199,125,.07); }
-    .status-icon svg { width: 17px; }
-    .status-card h3 { margin: 0 0 5px; font-size: 15px; }
-    .status-card p { margin: 0; max-width: 750px; color: #98a6bb; font-size: 12px; }
-    .status-label { border: 1px solid rgba(240,199,125,.23); border-radius: 999px; padding: 7px 10px; color: #f0ca88; background: rgba(240,199,125,.07); font-size: 10px; white-space: nowrap; }
-
-    .research-section { border-bottom: 1px solid rgba(165,184,220,.08); }
-    .research-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-    .research-card { display: flex; gap: 16px; padding: 20px; }
-    .research-index { flex: 0 0 28px; color: #829fda; font: 12px ui-monospace, monospace; }
-    .research-card h3 { margin: 0 0 6px; font-size: 14px; }
-    .research-card p { margin: 0; color: #96a4b9; font-size: 12px; }
-    .stack-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 16px; }
-    .stack-card { padding: 23px; }
-    .stack-card h3 { margin: 0 0 17px; font-size: 14px; }
-    .stack-list { display: flex; flex-wrap: wrap; gap: 8px; }
-    .stack-tag { border: 1px solid rgba(150,171,211,.16); border-radius: 8px; padding: 7px 10px; color: #b9c7dc; background: rgba(255,255,255,.025); font-size: 11px; }
-    .stack-note { margin: 13px 0 0; color: #79879d; font-size: 10px; }
-    .footer { padding: 31px 0; }
-    .footer-inner { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
-    .footer-copy { color: #7f8ca1; font-size: 11px; }
-    .footer-copy strong { color: #ced8e7; font-weight: 600; }
-    .footer-link { display: inline-flex; align-items: center; gap: 8px; color: #a9c5f6; font-size: 11px; text-decoration: none; }
-    .footer-link:hover { color: #fff; }
-    .footer-link svg { width: 15px; }
-
     @media (max-width: 900px) {
-      .hero-grid { grid-template-columns: 1fr .76fr; gap: 26px; }
-      .graph-panel { min-height: 300px; }
-      .pipeline { grid-template-columns: repeat(3, 1fr); }
-      .pipeline-step:nth-child(3)::after { display: none; }
-      .metrics-layout { grid-template-columns: 1fr; }
-      .metric-interpretation { min-height: 0; }
-      .metric-interpretation .selection { margin-top: 14px; }
+      .insight-chart-card { padding-inline: 13px; }
     }
-    @media (max-width: 650px) {
-      .wrap { width: min(calc(100% - 34px), var(--max)); }
-      .nav { min-height: 62px; }
-      .nav-links { gap: 14px; }
-      .nav-links a { font-size: 11px; }
-      .nav-links a:nth-child(2), .nav-links a:nth-child(3) { display: none; }
-      .nav-links .repo-link { padding: 6px 9px; }
-      .hero { padding: 62px 0 57px; }
-      .hero-grid { grid-template-columns: 1fr; gap: 31px; }
-      .hero-copy { font-size: 14px; }
-      .graph-panel { min-height: 280px; }
-      .hero-meta { gap: 13px; flex-wrap: wrap; }
-      section { padding: 65px 0; }
-      .problem-grid, .arch-details, .media-grid, .research-grid, .stack-grid { grid-template-columns: 1fr; }
-      .problem-card { min-height: 180px; }
-      .problem-card h3 { margin-top: 21px; }
-      .pipeline { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-      .pipeline-step:nth-child(3)::after { display: block; }
-      .pipeline-step:nth-child(2n)::after { display: none; }
-      .pipeline-step { min-height: 122px; }
-      .metric-card, .metric-interpretation { padding: 18px; }
-      .chart-row { grid-template-columns: 93px minmax(0, 1fr) 54px; gap: 8px; }
-      .chart-axis { margin-left: 101px; margin-right: 62px; }
-      .status-card { grid-template-columns: 1fr; }
-      .status-label { justify-self: start; margin-left: 47px; }
-      .footer-inner { align-items: flex-start; flex-direction: column; }
+    @media (max-width: 820px) {
+      :root { --sidebar-width: 248px; }
+      .sidebar { transform: translateX(-101%); box-shadow: 15px 0 45px rgba(0,0,0,.28); }
+      .sidebar.open { transform: translateX(0); }
+      .scrim { position: fixed; inset: 0; z-index: 19; display: block; visibility: hidden; opacity: 0; background: rgba(2,5,10,.63); transition: opacity .2s ease, visibility .2s ease; }
+      .scrim.visible { visibility: visible; opacity: 1; }
+      .main { margin-left: 0; }
+      .mobile-toggle { display: inline-flex; }
+      .topbar { height: 68px; }
+      .analysis-grid { grid-template-columns: minmax(0,1fr) minmax(0,.95fr); }
+      .content { padding-top: 24px; }
+    }
+    @media (max-width: 640px) {
+      .topbar { height: 62px; padding: 0 15px; }
+      .page-title { font-size: 15px; }
+      .top-subtitle { display: none; }
+      .topbar-right { gap: 8px; }
+      .top-health { font-size: 0; }
+      .top-health .health-dot { width: 8px; height: 8px; flex-basis: 8px; }
+      .model-badge { height: 27px; padding-inline: 8px; font-size: 9px; }
+      .content { padding: 21px 14px 34px; }
+      .welcome { align-items: flex-start; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+      .welcome h2 { font-size: 19px; }
+      .overview-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .stat-card { min-height: 105px; padding: 13px; }
+      .stat-top { font-size: 9px; }
+      .stat-value { font-size: 23px; }
+      .analysis-grid { grid-template-columns: 1fr; margin-top: 20px; }
+      .results-panel { min-height: 0; }
+      .result-content { min-height: 300px; }
+      .empty-state { min-height: 260px; }
+      .form-body { padding: 14px; }
+      .panel-header { padding-inline: 14px; }
+      .lower-grid { margin-top: 11px; }
+      .interpretation-list, .metric-definitions { grid-template-columns: 1fr; }
+      .insights-chart-grid { padding: 10px; }
+      .insight-chart-card { padding: 11px 9px 8px; }
+      .metric-chart { max-height: 200px; }
+      .insight-interpretation, .metric-definitions { margin-inline: 10px; }
+      .api-body { grid-template-columns: 1fr; gap: 11px; padding: 13px; }
+      .api-actions { justify-content: space-between; }
+      .api-error { margin-inline: 13px; }
+      .graph-view { padding-inline: 5px; }
+      .graph-legend { gap: 7px 10px; padding-inline: 12px; }
+      .history-toolbar { align-items: stretch; flex-direction: column; padding: 11px 12px; }
+      .history-filters { align-items: stretch; flex-direction: column; }
+      .history-control input, .history-control select { width: 100%; }
+      .history-actions { justify-content: flex-end; }
+      .history-pagination { align-items: flex-start; flex-direction: column; }
+      .report-document { margin: 12px; padding: 18px; }
+      .footer { flex-direction: column; }
+    }
+    @media (max-width: 390px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .field.full { grid-column: auto; }
+      .form-footer { align-items: flex-start; flex-direction: column; }
+      .privacy-note { max-width: none; }
+      .primary-button { width: 100%; }
+      .api-endpoint { font-size: 8px; }
+      .report-fields { grid-template-columns: 1fr; }
+      .report-dialog-actions .secondary-button { padding-inline: 7px; }
     }
     @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+    @media print {
+      @page { margin: 16mm; }
+      body.print-report { min-width: 0; background: #fff; color: #152034; }
+      body.print-report > .app { display: none !important; }
+      body.print-report #report-dialog[open] {
+        position: static; display: block; width: 100%; max-width: none; max-height: none; overflow: visible;
+        margin: 0; border: 0; border-radius: 0; padding: 0; background: #fff; color: #152034; box-shadow: none;
+      }
+      body.print-report #report-dialog::backdrop { display: none; }
+      body.print-report .report-dialog-header, body.print-report .report-loading, body.print-report .report-error { display: none !important; }
+      body.print-report .report-document { display: block !important; margin: 0; border: 0; border-radius: 0; padding: 0; background: #fff; color: #152034; }
+      body.print-report .report-section, body.print-report .report-field, body.print-report .report-reasons li, body.print-report .report-evidence li { break-inside: avoid; }
     }
   </style>
 </head>
 <body>
-  <a class="skip-link" href="#main">Skip to content</a>
-  <header class="topbar">
-    <nav class="nav wrap" aria-label="Main navigation">
-      <a class="brand" href="#" aria-label="FraudGraph home">
-        <span class="brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none"><path d="M5 7.5 12 4l7 3.5v9L12 20l-7-3.5v-9Z" stroke="currentColor" stroke-width="1.5"/><path d="m5.5 8 6.5 3.5L18.5 8M12 12v7.5" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="11.5" r="1.2" fill="currentColor"/></svg>
+  <div class="app">
+    <aside class="sidebar" id="sidebar" aria-label="Main sidebar">
+      <a class="brand" href="#overview" aria-label="FraudGraph overview">
+        <span class="brand-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><path d="m12 3 8 4.2v9.6L12 21l-8-4.2V7.2L12 3Z" stroke="currentColor" stroke-width="1.45"/><path d="m4.5 7.5 7.5 4 7.5-4M12 11.5v9" stroke="currentColor" stroke-width="1.45"/><circle cx="12" cy="11.5" r="1.15" fill="currentColor"/></svg>
         </span>
-        FraudGraph
+        <span class="brand-name">FraudGraph<small>Financial Intelligence</small></span>
       </a>
-      <div class="nav-links">
-        <a href="#research">Research</a>
-        <a href="#results">Results</a>
-        <a href="#demo">Demo</a>
-        <a class="repo-link" href="https://github.com/RiyaBisht1708/fraudGraph" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
-      </div>
-    </nav>
-  </header>
 
-  <main id="main">
-    <section class="hero" aria-labelledby="hero-title">
-      <div class="wrap hero-grid">
-        <div>
-          <div class="eyebrow">Research project · Financial risk</div>
-          <h1 id="hero-title">FraudGraph</h1>
-          <h2>Graph-Based Financial Fraud Detection</h2>
-          <p class="hero-copy">A transaction is more than a row. FraudGraph models the relationships between transactions, cards, merchants, and devices as a heterogeneous graph—giving fraud analysis a way to reason about connected entities and shared behavioral context.</p>
-          <div class="actions">
-            <a class="button button-primary" href="#research">Explore the research
-              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10h11m-4-4 4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </a>
-            <a class="button button-secondary" href="#demo">
-              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m7 5 8 5-8 5V5Z" fill="currentColor"/></svg>
-              View demonstration
-            </a>
-          </div>
-          <div class="hero-note"><span aria-hidden="true"></span> Research prototype · Public inference is not deployed</div>
-          <div class="hero-meta" aria-label="Project attributes"><span><i></i> Heterogeneous graph</span><span><i></i> Temporal evaluation</span><span><i></i> Explainable scoring</span></div>
-        </div>
-        <div class="graph-panel" aria-label="Illustration of connected transaction, card, merchant, and device nodes">
-          <span class="graph-label l1">transaction</span><span class="graph-label l2">card</span>
-          <span class="graph-label l3">merchant</span><span class="graph-label l4">device</span>
-          <svg class="graph-art" viewBox="0 0 420 300" role="img" aria-labelledby="graph-title graph-desc">
-            <title id="graph-title">Connected financial entities</title>
-            <desc id="graph-desc">Transaction nodes connect to cards, merchants, and devices, with a highlighted relation between transactions.</desc>
-            <g fill="none">
-              <path class="edge" d="M90 74 181 105M90 74 135 205M181 105 273 66M181 105 279 174M135 205 225 238M135 205 279 174M273 66 340 117M279 174 340 117M279 174 225 238M181 105 225 238M90 74 279 174"/>
-              <path class="edge-hot" d="M181 105 279 174M135 205 225 238"/>
-            </g>
-            <g>
-              <circle class="node node-tx" cx="90" cy="74" r="9"/><circle class="node node-tx" cx="181" cy="105" r="11"/>
-              <circle class="node node-tx" cx="279" cy="174" r="10"/><circle class="node node-tx" cx="135" cy="205" r="8"/>
-              <circle class="node node-tx" cx="225" cy="238" r="8"/><circle class="node node-card" cx="273" cy="66" r="12"/>
-              <circle class="node node-card" cx="340" cy="117" r="10"/><circle class="node node-device" cx="90" cy="150" r="10"/>
-              <circle class="node node-device" cx="340" cy="228" r="11"/><circle class="node node-merchant" cx="70" cy="248" r="9"/>
-              <circle class="node node-merchant" cx="208" cy="52" r="8"/>
-            </g>
-            <g fill="none" stroke="#60749c" stroke-opacity=".48" stroke-width="1.2">
-              <path d="M90 74 90 150M135 205 70 248M181 105 208 52M279 174 340 228M225 238 340 228"/>
-            </g>
-            <circle cx="181" cy="105" r="20" fill="none" stroke="#78a8ff" stroke-opacity=".18"/>
-            <circle cx="279" cy="174" r="19" fill="none" stroke="#ad91ff" stroke-opacity=".2"/>
-          </svg>
-        </div>
+      <div class="nav-group">
+        <div class="nav-label">Workspace</div>
+        <nav class="side-nav" aria-label="Dashboard sections">
+          <a href="#overview" aria-current="page">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/></svg>
+            Overview
+          </a>
+          <a href="#analyze">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8" stroke="currentColor" stroke-width="1.5"/><path d="m16 16 4.5 4.5M10.8 7.5v6.6m-3.3-3.3h6.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Analyze Transaction
+          </a>
+          <a href="#transaction-history">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 5.5h14v14H5zM8 3.5v4m8-4v4M5 9.5h14m-10 4h6m-6 3h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Transaction History
+          </a>
+          <a href="#insights">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 19.5h16M6.5 16V10m5 6V5m5 11v-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            Model Insights
+          </a>
+          <a href="#graph">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="5" cy="12" r="2.1" stroke="currentColor" stroke-width="1.5"/><circle cx="18.5" cy="5" r="2.1" stroke="currentColor" stroke-width="1.5"/><circle cx="18.5" cy="19" r="2.1" stroke="currentColor" stroke-width="1.5"/><path d="m7 11 9.5-5m-9.5 7 9.5 5" stroke="currentColor" stroke-width="1.5"/></svg>
+            Graph Intelligence
+          </a>
+          <a href="#api-status">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3.5 20 7v5.3c0 4.4-3 7.3-8 9.2-5-1.9-8-4.8-8-9.2V7l8-3.5Z" stroke="currentColor" stroke-width="1.5"/><path d="m8.5 12 2.3 2.3 4.8-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Demo Status
+          </a>
+          <a href="#about">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.5"/><path d="M12 11v5m0-8h.01" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            About Project
+          </a>
+        </nav>
       </div>
-    </section>
 
-    <section class="problem-section" id="problem" aria-labelledby="problem-title">
-      <div class="wrap">
-        <div class="section-heading">
-          <div class="section-kicker">01 · Motivation</div>
-          <h2 id="problem-title">Fraud rarely happens in isolation.</h2>
-          <p>Row-by-row signals can miss the shared entities and repeated connections that make a series of transactions meaningful.</p>
+      <div class="sidebar-bottom">
+        <div class="sidebar-health" aria-live="polite">
+          <div class="sidebar-health-title"><span class="health-dot" id="sidebar-health-dot"></span><span id="sidebar-health-title">Backend status</span></div>
+          <p id="sidebar-health-copy">Not checked</p>
         </div>
-        <div class="problem-grid">
-          <article class="problem-card">
-            <div class="number">THE LIMITATION</div>
-            <h3>Transactions viewed one at a time</h3>
-            <p>A transaction-level model evaluates the features in one row. Connections—such as a card appearing across transactions or an entity recurring across activity—are not explicit in that view.</p>
+        <div class="sidebar-meta">RESEARCH INFERENCE · PURE SAGE</div>
+      </div>
+    </aside>
+
+    <button class="scrim" id="scrim" type="button" aria-label="Close navigation" tabindex="-1"></button>
+
+    <div class="main">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="mobile-toggle" id="menu-toggle" type="button" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6.5h16M4 12h16M4 17.5h16" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          </button>
+          <div><h1 class="page-title">Fraud Intelligence</h1><div class="top-subtitle">Transaction analysis workspace</div></div>
+        </div>
+        <div class="topbar-right">
+          <span class="model-badge"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="4" r="2" stroke="currentColor" stroke-width="1.4"/><circle cx="4.5" cy="15.5" r="2" stroke="currentColor" stroke-width="1.4"/><circle cx="15.5" cy="15.5" r="2" stroke="currentColor" stroke-width="1.4"/><path d="m9 6-3.5 7.5M11 6l3.5 7.5m-8 2h8" stroke="currentColor" stroke-width="1.3"/></svg>PureSAGE</span>
+          <span class="top-health" aria-live="polite"><span class="health-dot" id="top-health-dot"></span><span id="top-health-label">Backend not checked</span></span>
+        </div>
+      </header>
+
+      <main class="content" id="overview">
+        <div class="welcome">
+          <div><h2>Overview</h2><p>Analyze a transaction and review the model's returned signals.</p></div>
+          <div class="session-label"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.4"/><path d="M10 6v4l2.5 1.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>Counts from this page session only</div>
+        </div>
+
+        <section class="overview-grid" aria-label="Transactions analyzed in this page session">
+          <article class="stat-card total">
+            <div class="stat-top"><span>Total analyzed</span><span class="stat-icon"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 5.5h12m-12 4.5h12m-12 4.5h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span></div>
+            <div class="stat-value" id="count-total">0</div><div class="stat-foot">Demo transactions</div>
           </article>
-          <article class="problem-card graph-card">
-            <div class="number">THE GRAPH VIEW</div>
-            <h3>Entities become context</h3>
-            <p>A heterogeneous graph represents transactions alongside cards, merchants, and devices. Message passing can use linked neighborhood structure as part of the fraud signal, rather than treating each event as disconnected.</p>
+          <article class="stat-card approved">
+            <div class="stat-top"><span>Approved</span><span class="stat-icon"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m4.5 10 3.6 3.6 7.4-7.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div>
+            <div class="stat-value" id="count-approve">0</div><div class="stat-foot">Returned decision: APPROVE</div>
           </article>
-        </div>
-      </div>
-    </section>
+          <article class="stat-card flagged">
+            <div class="stat-top"><span>Flagged</span><span class="stat-icon"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 4v6m0 3.5h.01M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span></div>
+            <div class="stat-value" id="count-flag">0</div><div class="stat-foot">Returned decision: FLAG</div>
+          </article>
+          <article class="stat-card declined">
+            <div class="stat-top"><span>Declined</span><span class="stat-icon"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m6 6 8 8m0-8-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.4"/></svg></span></div>
+            <div class="stat-value" id="count-decline">0</div><div class="stat-foot">Returned decision: DECLINE</div>
+          </article>
+        </section>
 
-    <section class="architecture" id="architecture" aria-labelledby="architecture-title">
-      <div class="wrap">
-        <div class="section-heading">
-          <div class="section-kicker">02 · System architecture</div>
-          <h2 id="architecture-title">From event stream to reasoned score.</h2>
-          <p>The pipeline spans offline feature and graph preparation, model selection, then a locally tested serving path.</p>
-        </div>
-        <div class="pipeline" aria-label="Transaction data flows through feature engineering, heterogeneous graph construction, graph neural network, fraud scoring, and explainability">
-          <article class="pipeline-step"><div class="step-number">01 / INPUT</div><svg class="step-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6.5 12 3l8 3.5v11L12 21l-8-3.5v-11Z" stroke="currentColor" stroke-width="1.4"/><path d="M4.5 7 12 10.5 19.5 7M12 10.5v10" stroke="currentColor" stroke-width="1.4"/></svg><h3>Transaction data</h3></article>
-          <article class="pipeline-step"><div class="step-number">02 / PREPARE</div><svg class="step-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6h16M7 12h10m-7 6h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="8" cy="6" r="2" fill="#121b2c" stroke="currentColor" stroke-width="1.4"/><circle cx="15" cy="12" r="2" fill="#121b2c" stroke="currentColor" stroke-width="1.4"/></svg><h3>Feature engineering</h3></article>
-          <article class="pipeline-step"><div class="step-number">03 / CONNECT</div><svg class="step-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="5" cy="12" r="2.2" stroke="currentColor" stroke-width="1.5"/><circle cx="18.5" cy="5" r="2.2" stroke="currentColor" stroke-width="1.5"/><circle cx="18.5" cy="19" r="2.2" stroke="currentColor" stroke-width="1.5"/><path d="m7 11 9.5-5M7 13l9.5 5" stroke="currentColor" stroke-width="1.5"/></svg><h3>Heterogeneous graph</h3></article>
-          <article class="pipeline-step"><div class="step-number">04 / LEARN</div><svg class="step-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="5" r="2" stroke="currentColor" stroke-width="1.4"/><circle cx="6" cy="18" r="2" stroke="currentColor" stroke-width="1.4"/><circle cx="18" cy="18" r="2" stroke="currentColor" stroke-width="1.4"/><path d="m11 7-4 9m6-9 4 9m-9 2h10" stroke="currentColor" stroke-width="1.4"/></svg><h3>Graph neural network</h3></article>
-          <article class="pipeline-step"><div class="step-number">05 / SCORE</div><svg class="step-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 19V9m7 10V5m7 14v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M3 21h18" stroke="currentColor" stroke-width="1.3"/></svg><h3>Fraud scoring</h3></article>
-          <article class="pipeline-step"><div class="step-number">06 / EXPLAIN</div><svg class="step-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3.5a7 7 0 0 0-4 12.75c.8.55 1 1.2 1 1.75h6c0-.55.2-1.2 1-1.75a7 7 0 0 0-4-12.75Z" stroke="currentColor" stroke-width="1.4"/><path d="M9.5 21h5m-4.5-3h4m-2-9v5m-2.3-3.1 2.3 1.2 2.3-1.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg><h3>Explainability</h3></article>
-        </div>
-        <div class="arch-details">
-          <article class="architecture-card"><h3>Graph construction</h3><p>Transactions connect to card, merchant, and device entities, with temporal velocity-cluster edges. <strong>PyTorch Geometric</strong> represents the heterogeneous graph; <strong>NetworkX</strong> is a graph-prototyping reference, not a dependency in the current implementation.</p></article>
-          <article class="architecture-card"><h3>Modeling &amp; baselines</h3><p><strong>GraphSAGE</strong> models neighborhood information; hybrid GNN and <strong>XGBoost</strong> baselines are compared on a temporally held-out test set. PureSAGE is the selected inference architecture.</p></article>
-          <article class="architecture-card"><h3>Local serving path</h3><p><strong>FastAPI</strong> receives scoring requests, while <strong>Redis</strong> maintains rolling transaction context and Kafka carries stream events. The inference service has been tested locally, not deployed as a public API.</p></article>
-        </div>
-        <p class="architecture-note">Offline graph construction and training artifacts are separate from the local serving stack. This research prototype is not represented as a production deployment.</p>
-      </div>
-    </section>
-
-    <section class="metrics-section" id="results" aria-labelledby="results-title">
-      <div class="wrap">
-        <div class="section-heading">
-          <div class="section-kicker">03 · Held-out evaluation</div>
-          <h2 id="results-title">Model comparison, with the full picture.</h2>
-          <p>Reported test metrics are shown as supplied. Select a metric to compare models on a shared 0–1 scale.</p>
-        </div>
-        <div class="metrics-layout">
-          <div class="metric-card">
-            <div class="metric-top">
-              <div><h3>Test-set metric comparison</h3><p>Four evaluated architectures · higher is better</p></div>
-              <span class="test-badge">HELD-OUT TEST</span>
+        <section class="analysis-grid" id="analyze" aria-label="Transaction analysis">
+          <article class="panel">
+            <div class="panel-header">
+              <div class="panel-title-wrap"><h2 class="panel-title">Analyze transaction</h2><div class="panel-subtitle">Enter sample transaction details to explore the interactive demo engine</div></div>
+              <span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 20 20" fill="none"><circle cx="8.8" cy="8.8" r="5.8" stroke="currentColor" stroke-width="1.5"/><path d="m13.2 13.2 4 4m-8.4-11v5.2m-2.6-2.6h5.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
             </div>
-            <div class="metric-tabs" role="group" aria-label="Choose model comparison metric">
-              <button class="metric-tab" type="button" data-metric="auc" aria-pressed="true">ROC-AUC</button>
-              <button class="metric-tab" type="button" data-metric="ap" aria-pressed="false">Average Precision</button>
-              <button class="metric-tab" type="button" data-metric="p10r" aria-pressed="false">Precision @ 10% Recall</button>
+            <form class="form-body" id="analysis-form" novalidate>
+              <div class="form-grid">
+                <div class="field">
+                  <label for="TransactionAmt">Transaction Amount <small>Required</small></label>
+                  <input id="TransactionAmt" name="TransactionAmt" type="number" inputmode="decimal" min="0" step="any" placeholder="e.g. 124.50" required aria-describedby="TransactionAmt-error">
+                  <div class="field-error" id="TransactionAmt-error"></div>
+                </div>
+                <div class="field">
+                  <label for="ProductCD">Product Category <small>Required</small></label>
+                  <input id="ProductCD" name="ProductCD" type="text" maxlength="64" placeholder="e.g. W" autocomplete="off" required aria-describedby="ProductCD-error">
+                  <div class="field-error" id="ProductCD-error"></div>
+                </div>
+                <div class="field">
+                  <label for="card1">Card ID <small>Optional</small></label>
+                  <input id="card1" name="card1" type="text" inputmode="decimal" maxlength="64" placeholder="e.g. 13926" autocomplete="off" aria-describedby="card1-error">
+                  <div class="field-error" id="card1-error"></div>
+                </div>
+                <div class="field">
+                  <label for="addr1">Address ID <small>Optional</small></label>
+                  <input id="addr1" name="addr1" type="number" inputmode="decimal" step="any" placeholder="e.g. 315" aria-describedby="addr1-error">
+                  <div class="field-error" id="addr1-error"></div>
+                </div>
+                <div class="field">
+                  <label for="DeviceInfo">Device Information <small>Optional</small></label>
+                  <input id="DeviceInfo" name="DeviceInfo" type="text" maxlength="256" placeholder="e.g. device fingerprint" autocomplete="off">
+                </div>
+                <div class="field">
+                  <label for="TransactionDT">Transaction Timestamp <small>Required</small></label>
+                  <input id="TransactionDT" name="TransactionDT" type="number" inputmode="decimal" min="0" step="any" placeholder="e.g. 86400" required aria-describedby="TransactionDT-error">
+                  <div class="field-error" id="TransactionDT-error"></div>
+                </div>
+                <div class="field full">
+                  <label for="TransactionID">Transaction ID <small>Optional</small></label>
+                  <input id="TransactionID" name="TransactionID" type="text" maxlength="128" placeholder="e.g. 2987000" autocomplete="off">
+                </div>
+              </div>
+              <p class="input-note">Timestamp uses the dataset's TransactionDT value in seconds; it is not a calendar date input.</p>
+              <div class="form-footer">
+                <div class="privacy-note"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 8V5.8a5 5 0 0 1 10 0V8m-11 0h12v9H4V8Z" stroke="currentColor" stroke-width="1.35"/><circle cx="10" cy="12.3" r="1" fill="currentColor"/></svg>Interactive demo only: scores are illustrative simulations, not live ML predictions. Demo records stay in this browser.</div>
+                <button class="primary-button" id="analyze-button" type="submit" aria-busy="false">
+                  <span class="button-spinner" aria-hidden="true"></span>
+                  <svg class="button-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3.5 10h12m-4.5-4.5L15.5 10 11 14.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <span class="button-label">Analyze transaction</span>
+                </button>
+              </div>
+            </form>
+          </article>
+
+          <article class="panel results-panel" aria-labelledby="results-title">
+            <div class="panel-header">
+              <div class="panel-title-wrap"><h2 class="panel-title" id="results-title">Demo results</h2><div class="panel-subtitle">Illustrative results generated by the browser demo</div></div>
+              <span class="section-eyebrow">Demo result</span>
             </div>
-            <div class="chart" id="metric-chart" role="img" aria-label="ROC-AUC comparison: PureSAGE 0.826611, Hybrid GNN 0.830825, XGBoost 0.907310, XGBoost plus GNN Stack 0.871124">
-              <div class="chart-row" data-model="PureSAGE"><span class="chart-name">PureSAGE</span><span class="chart-track"><span class="chart-fill" style="--value:82.6611%"></span></span><span class="chart-value">0.826611</span></div>
-              <div class="chart-row" data-model="Hybrid GNN"><span class="chart-name">Hybrid GNN</span><span class="chart-track"><span class="chart-fill" style="--value:83.0825%"></span></span><span class="chart-value">0.830825</span></div>
-              <div class="chart-row" data-model="XGBoost"><span class="chart-name">XGBoost</span><span class="chart-track"><span class="chart-fill" style="--value:90.731%"></span></span><span class="chart-value">0.907310</span></div>
-              <div class="chart-row" data-model="XGBoost + GNN Stack"><span class="chart-name">XGBoost + GNN Stack</span><span class="chart-track"><span class="chart-fill" style="--value:87.1124%"></span></span><span class="chart-value">0.871124</span></div>
+            <div class="result-content">
+              <div class="request-error" id="request-error" role="alert"></div>
+              <div class="result-loading" id="result-loading" aria-live="polite"><span class="loading-ring" aria-hidden="true"></span>Scoring transaction…</div>
+              <div class="empty-state" id="result-empty">
+                <div class="empty-graphic" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><circle cx="9" cy="9" r="3" stroke="currentColor" stroke-width="1.5"/><circle cx="23" cy="9" r="3" stroke="currentColor" stroke-width="1.5"/><circle cx="16" cy="23" r="3" stroke="currentColor" stroke-width="1.5"/><path d="m11.5 10.5 3 9m6-9-3 9m-5.5 2h6" stroke="currentColor" stroke-width="1.5"/></svg></div>
+                <h3>Awaiting transaction analysis</h3>
+                <p>Enter transaction details and submit to view the returned fraud probability, decision, latency, and explanation factors.</p>
+              </div>
+              <div class="result-data" id="result-data" hidden>
+                <div class="result-summary">
+                  <div><div class="result-score-label">Fraud probability</div><div class="result-score" id="result-score">—</div></div>
+                  <span class="result-decision" id="result-decision">—</span>
+                  <div class="result-meta"><span>Transaction <strong id="result-transaction-id">—</strong></span><span>Inference <strong id="result-latency">—</strong></span></div>
+                </div>
+                <div class="result-block">
+                  <div class="result-block-heading">Top explanation factors <span id="reason-count"></span></div>
+                  <ul class="reason-list" id="reason-list"></ul>
+                  <p class="result-empty-note" id="reason-empty" hidden>No illustrative explanation factors are available.</p>
+                </div>
+                <div class="result-block">
+                  <div class="result-block-heading">Graph relationships <span>Returned evidence</span></div>
+                  <ul class="reason-list" id="relationship-list"></ul>
+                  <p class="result-empty-note" id="relationship-empty">No illustrative graph relationship details are available.</p>
+                </div>
+              </div>
             </div>
-            <div class="chart-axis" aria-hidden="true"><span>0.0</span><span>0.5</span><span>1.0</span></div>
+          </article>
+        </section>
+
+        <section class="lower-grid" id="insights">
+          <article class="panel insights-panel" aria-labelledby="insights-title">
+            <div class="panel-header">
+              <div class="panel-title-wrap"><h2 class="panel-title" id="insights-title">Model insights</h2><div class="panel-subtitle">Recorded held-out test results across candidate models</div></div>
+              <span class="heldout-tag">HELD-OUT TEST</span>
+            </div>
+            <div class="insights-chart-grid" aria-label="Held-out test metric charts">
+              <section class="insight-chart-card" aria-labelledby="roc-chart-heading">
+                <h3 id="roc-chart-heading">ROC-AUC comparison</h3>
+                <p>Higher values indicate stronger separation across score thresholds.</p>
+                <div id="chart-roc-auc"></div>
+              </section>
+              <section class="insight-chart-card" aria-labelledby="ap-chart-heading">
+                <h3 id="ap-chart-heading">Average Precision comparison</h3>
+                <p>Precision-recall performance summarized across thresholds.</p>
+                <div id="chart-average-precision"></div>
+              </section>
+              <section class="insight-chart-card" aria-labelledby="p10r-chart-heading">
+                <h3 id="p10r-chart-heading">Precision at 10% Recall comparison</h3>
+                <p>Precision at the selected operating point where recall is 10%.</p>
+                <div id="chart-precision-at-10-recall"></div>
+              </section>
+            </div>
+            <aside class="insight-interpretation" aria-labelledby="interpretation-title">
+              <div class="interpretation-heading">
+                <h3 id="interpretation-title">Research interpretation</h3>
+                <span class="selected-model-badge" title="Selected for inference based on validation selection">Selected inference model · PureSAGE</span>
+              </div>
+              <ul class="interpretation-list">
+                <li>XGBoost has the highest held-out test ROC-AUC.</li>
+                <li>XGBoost has the highest held-out test Average Precision.</li>
+                <li>XGBoost + GNN Stack has the highest held-out test Precision at 10% Recall.</li>
+                <li>PureSAGE was selected as the inference architecture based on validation selection, not as the winner across all test metrics.</li>
+              </ul>
+            </aside>
+            <dl class="metric-definitions" aria-label="Metric definitions">
+              <div class="metric-definition"><dt>ROC-AUC</dt><dd>Ability to distinguish between fraud and non-fraud cases across thresholds.</dd></div>
+              <div class="metric-definition"><dt>Average Precision</dt><dd>Summarizes precision-recall performance.</dd></div>
+              <div class="metric-definition"><dt>Precision at 10% Recall</dt><dd>Precision at the selected operating point where recall is 10%.</dd></div>
+            </dl>
+            <div class="table-wrap">
+              <table class="metrics-table">
+                <thead><tr><th scope="col">Model</th><th scope="col">ROC-AUC</th><th scope="col">Average Precision</th><th scope="col">Precision @ 10% Recall</th></tr></thead>
+                <tbody>
+                  <tr><td><span class="selected-row-label">PureSAGE <span class="selected-row-badge">Selected inference</span></span></td><td>0.8266112543</td><td>0.4106128246</td><td>0.8847826087</td></tr>
+                  <tr><td>Hybrid GNN</td><td>0.8308247691</td><td>0.4269114713</td><td>0.8962472406</td></tr>
+                  <tr><td>XGBoost</td><td>0.9073098871</td><td>0.5230309453</td><td>0.9333333333</td></tr>
+                  <tr><td>XGBoost + GNN Stack</td><td>0.8711239847</td><td>0.4852015354</td><td>0.9598108747</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="table-note">These are held-out test results, not live inference performance. PureSAGE was selected for inference based on validation selection.</p>
+          </article>
+
+          <article class="panel" id="graph" aria-labelledby="graph-title">
+            <div class="panel-header">
+              <div class="panel-title-wrap"><h2 class="panel-title" id="graph-title">Graph intelligence</h2><div class="panel-subtitle">Relationships found in returned model evidence</div></div>
+              <span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 20 20" fill="none"><circle cx="5" cy="10" r="2" stroke="currentColor" stroke-width="1.3"/><circle cx="15" cy="5" r="2" stroke="currentColor" stroke-width="1.3"/><circle cx="15" cy="15" r="2" stroke="currentColor" stroke-width="1.3"/><path d="m7 9 6-3m-6 5 6 3" stroke="currentColor" stroke-width="1.3"/></svg></span>
+            </div>
+            <div class="tech-content">
+              <div class="graph-view">
+                <div class="graph-empty" id="graph-empty" aria-live="polite">
+                  <span class="graph-empty-mark" aria-hidden="true"><svg viewBox="0 0 20 20" fill="none"><circle cx="5" cy="10" r="2" stroke="currentColor" stroke-width="1.4"/><circle cx="15" cy="5" r="2" stroke="currentColor" stroke-width="1.4"/><circle cx="15" cy="15" r="2" stroke="currentColor" stroke-width="1.4"/><path d="m7 9 6-3m-6 5 6 3" stroke="currentColor" stroke-width="1.4"/></svg></span>
+                  <h3 id="graph-empty-title">No transaction analyzed</h3>
+                  <p id="graph-empty-copy">Submit a transaction to view any device or card relationships included in the model's response.</p>
+                </div>
+                <div class="graph-visualization" id="graph-visualization" hidden></div>
+              </div>
+              <div class="graph-legend" aria-label="Graph legend">
+                <span class="graph-legend-item"><span class="graph-legend-swatch transaction" aria-hidden="true"></span>Transaction</span>
+                <span class="graph-legend-item"><span class="graph-legend-swatch device" aria-hidden="true"></span>Device</span>
+                <span class="graph-legend-item"><span class="graph-legend-swatch card" aria-hidden="true"></span>Card</span>
+                <span class="graph-legend-item"><span class="graph-legend-swatch relationship" aria-hidden="true"></span>Relationship</span>
+              </div>
+              <p class="tech-note">A relationship view built only from returned model evidence—not a complete transaction graph.</p>
+              <div class="tech-tags">
+                <span class="tech-tag graph">GraphSAGE</span>
+                <span class="tech-tag graph">PyTorch Geometric</span>
+                <span class="tech-tag">NetworkX</span>
+                <span class="tech-tag">FastAPI</span>
+                <span class="tech-tag">Redis</span>
+                <span class="tech-tag">Explainable AI</span>
+              </div>
+              <p class="tech-note">NetworkX is shown for reference but is not integrated into the current serving path; inference uses PyTorch Geometric.</p>
+            </div>
+          </article>
+        </section>
+
+        <section class="panel history-panel" id="transaction-history" aria-labelledby="history-title">
+          <div class="panel-header">
+            <div class="panel-title-wrap"><h2 class="panel-title" id="history-title">Transaction history</h2><div class="panel-subtitle">Locally saved research/demo inference records</div></div>
+            <div class="history-total" aria-live="polite"><strong id="history-total">—</strong><span>total saved records</span></div>
           </div>
-          <aside class="metric-card metric-interpretation">
-            <div><div class="callout-mark" aria-hidden="true">↗</div><h3>Selection is not a leaderboard.</h3><p>XGBoost leads the supplied test results on ROC-AUC and Average Precision. The XGBoost + GNN Stack has the highest Precision at 10% Recall. Results depend on the metric.</p></div>
-            <div class="selection"><strong>Why PureSAGE?</strong> PureSAGE was selected as the deployed inference architecture based on validation selection—not because it achieved the best score on every test metric.</div>
-          </aside>
-        </div>
-        <div class="metric-table-wrap">
-          <table class="metric-table">
-            <thead><tr><th scope="col">Model</th><th scope="col">ROC-AUC</th><th scope="col">Average Precision</th><th scope="col">Precision at 10% Recall</th></tr></thead>
-            <tbody>
-              <tr><td>PureSAGE</td><td>0.826611</td><td>0.410613</td><td>0.884783</td></tr>
-              <tr><td>Hybrid GNN</td><td>0.830825</td><td>0.426911</td><td>0.896247</td></tr>
-              <tr><td>XGBoost</td><td>0.907310</td><td>0.523031</td><td>0.933333</td></tr>
-              <tr><td>XGBoost + GNN Stack</td><td>0.871124</td><td>0.485202</td><td>0.959811</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <p class="metric-caption">Metrics are the supplied held-out test results. Validation data informed architecture selection; the table does not imply public or production performance.</p>
-      </div>
-    </section>
-
-    <section class="media-section" id="dashboard" aria-labelledby="dashboard-title">
-      <div class="wrap">
-        <div class="section-heading">
-          <div class="section-kicker">04 · Monitoring view</div>
-          <h2 id="dashboard-title">A window into the project dashboard.</h2>
-          <p>The project dashboard visualizes the monitoring interface developed alongside the local serving pipeline.</p>
-        </div>
-        <figure class="media-frame">
-          <img src="assets/dashboard.png" alt="FraudGraph monitoring dashboard showing transaction scoring and system metrics" width="1600" height="900" loading="lazy">
-          <figcaption class="media-caption"><strong>FraudGraph dashboard</strong> · Static project screenshot</figcaption>
-        </figure>
-      </div>
-    </section>
-
-    <section class="media-section" id="demo" aria-labelledby="demo-title">
-      <div class="wrap media-grid">
-        <div class="demo-column">
-          <div class="section-heading">
-            <div class="section-kicker">05 · Project demonstration</div>
-            <h2 id="demo-title">See the system in motion.</h2>
-            <p>A recorded walkthrough of the project demonstration. Playback is controlled by the viewer.</p>
+          <div class="history-toolbar">
+            <div class="history-filters">
+              <div class="history-control"><label for="history-search">Search transaction ID</label><input id="history-search" type="search" maxlength="128" placeholder="Search by transaction ID" autocomplete="off"></div>
+              <div class="history-control"><label for="history-decision">Decision</label><select id="history-decision"><option value="">All decisions</option><option value="APPROVE">APPROVE</option><option value="FLAG">FLAG</option><option value="DECLINE">DECLINE</option></select></div>
+            </div>
+            <div class="history-actions">
+              <button class="secondary-button" id="history-csv" type="button" disabled><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 3v9m0 0 3.5-3.5M10 12 6.5 8.5M4 13v3.5h12V13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Export CSV</button>
+              <button class="secondary-button" id="history-refresh" type="button"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M16 8a6.3 6.3 0 0 0-11.4-2L3 8m0-4v4h4m-3 4a6.3 6.3 0 0 0 11.4 2L17 12m0 4v-4h-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Refresh</button>
+            </div>
           </div>
-          <figure class="media-frame">
-            <video controls preload="metadata" playsinline aria-label="FraudGraph project demonstration video">
-              <source src="assets/demo.mp4" type="video/mp4">
-              Your browser does not support the video element. Open the project repository to view the demonstration.
-            </video>
-            <figcaption class="media-caption"><strong>Project demonstration</strong> · Video file served from this GitHub Pages site</figcaption>
-          </figure>
-        </div>
-        <aside class="status-card" style="align-self:center">
-          <div class="status-main">
-            <span class="status-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3 21 19H3L12 3Z" stroke="currentColor" stroke-width="1.5"/><path d="M12 9v4m0 3h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
-            <div><h3>Inference status</h3><p>The FastAPI inference service has been tested locally. This public website does not connect to a live scoring API; public live inference has not been deployed. No predictions are simulated here.</p></div>
+          <div class="history-message" id="history-loading" role="status" hidden>Loading saved transaction history…</div>
+          <div class="history-message error" id="history-error" role="alert" hidden></div>
+          <div class="history-message" id="history-empty" hidden>No saved records match this search and decision filter.</div>
+          <div class="history-table-wrap" id="history-table-wrap">
+            <table class="history-table">
+              <caption class="sr-only">Saved transaction analysis history</caption>
+              <thead><tr><th scope="col">Transaction ID</th><th scope="col">Fraud probability</th><th scope="col">Decision</th><th scope="col">Amount</th><th scope="col">Inference latency</th><th scope="col">Analysis date</th><th scope="col">Report</th></tr></thead>
+              <tbody id="history-rows"></tbody>
+            </table>
           </div>
-          <span class="status-label">LOCAL TESTED · NOT PUBLIC</span>
-        </aside>
-      </div>
-    </section>
+          <div class="history-pagination">
+            <span class="history-page-summary" id="history-page-summary">No saved records</span>
+            <div class="history-page-controls"><button class="secondary-button" id="history-previous" type="button" disabled>Previous</button><button class="secondary-button" id="history-next" type="button" disabled>Next</button></div>
+          </div>
+        </section>
 
-    <section class="research-section" id="research" aria-labelledby="research-title">
-      <div class="wrap">
-        <div class="section-heading">
-          <div class="section-kicker">06 · Research &amp; engineering</div>
-          <h2 id="research-title">A disciplined path through the problem.</h2>
-          <p>Experiments are organized around temporal evaluation, relational representation, model comparison, and inspectable outputs.</p>
-        </div>
-        <div class="research-grid">
-          <article class="research-card"><span class="research-index">01</span><div><h3>Temporal split</h3><p>Training, validation, and test are separated by timeline (70/10/20). Validation informs model selection; test results are reported separately.</p></div></article>
-          <article class="research-card"><span class="research-index">02</span><div><h3>Heterogeneous graph</h3><p>Transactions, cards, merchants, and devices are represented as node types. Typed links include entity associations and transaction velocity clusters.</p></div></article>
-          <article class="research-card"><span class="research-index">03</span><div><h3>GraphSAGE experiments</h3><p>PureSAGE and a hybrid GraphSAGE/attention model explore message passing across edge types, alongside a strong XGBoost baseline.</p></div></article>
-          <article class="research-card"><span class="research-index">04</span><div><h3>Model comparison</h3><p>ROC-AUC, Average Precision, and Precision at 10% Recall provide complementary views of held-out test performance.</p></div></article>
-          <article class="research-card"><span class="research-index">05</span><div><h3>Evidence-based explanations</h3><p>The serving code includes an explanation layer that reports graph-grounded reasons; this site makes no claim that an online public explainer is available.</p></div></article>
-          <article class="research-card"><span class="research-index">06</span><div><h3>Scope &amp; limitations</h3><p>A research implementation and local serving test are not equivalent to a production system or a publicly accessible inference endpoint.</p></div></article>
-        </div>
-      </div>
-    </section>
+        <section class="panel api-panel" id="api-status" aria-labelledby="api-title">
+          <div class="panel-header">
+            <div class="panel-title-wrap"><h2 class="panel-title" id="api-title">Demo status</h2><div class="panel-subtitle">Browser demo status</div></div>
+            <span class="section-eyebrow">Interactive browser demo</span>
+          </div>
+          <div class="api-body">
+            <div class="api-state" aria-live="polite">
+              <span class="health-dot" id="api-health-dot"></span>
+              <div><h3 id="api-status-title">Not checked</h3><p id="api-status-detail">The interactive browser demo is ready.</p></div>
+            </div>
+            <div class="api-actions"><span class="api-endpoint">Browser demo status</span><button class="secondary-button" id="health-check" type="button"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M16 8a6.3 6.3 0 0 0-11.4-2L3 8m0-4v4h4m-3 4a6.3 6.3 0 0 0 11.4 2L17 12m0 4v-4h-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Check health</button></div>
+          </div>
+          <div class="api-error" id="api-error" role="status"></div>
+        </section>
 
-    <section id="stack" aria-labelledby="stack-title">
-      <div class="wrap">
-        <div class="section-heading">
-          <div class="section-kicker">07 · Technology</div>
-          <h2 id="stack-title">Built for experimentation.</h2>
-          <p>Core technologies present in the project implementation and its local serving setup.</p>
-        </div>
-        <div class="stack-grid">
-          <article class="stack-card"><h3>Modeling &amp; data</h3><div class="stack-list"><span class="stack-tag">Python</span><span class="stack-tag">PyTorch</span><span class="stack-tag">PyTorch Geometric</span><span class="stack-tag">GraphSAGE</span><span class="stack-tag">XGBoost</span><span class="stack-tag">MLflow</span></div></article>
-          <article class="stack-card"><h3>Local serving &amp; observability</h3><div class="stack-list"><span class="stack-tag">FastAPI</span><span class="stack-tag">Redis</span><span class="stack-tag">Apache Kafka</span><span class="stack-tag">Prometheus</span><span class="stack-tag">Grafana</span><span class="stack-tag">Docker Compose</span></div><p class="stack-note">NetworkX is not part of the current implementation. React and PostgreSQL are not used in this project.</p></article>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer class="footer">
-    <div class="wrap footer-inner">
-      <div class="footer-copy"><strong>FraudGraph</strong> · Graph-Based Financial Fraud Detection<br>Python · PyTorch Geometric · XGBoost · FastAPI · Redis</div>
-      <a class="footer-link" href="https://github.com/RiyaBisht1708/fraudGraph" target="_blank" rel="noopener noreferrer">
-        View public GitHub repository
-        <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M6 14 14 6M7 6h7v7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </a>
+        <footer class="footer" id="about">
+          <span>FraudGraph · Graph-based financial fraud detection research project</span>
+          <span>Model badge reflects the selected inference architecture · PureSAGE</span>
+        </footer>
+      </main>
     </div>
-  </footer>
+  </div>
+
+  <dialog class="report-dialog" id="report-dialog" aria-labelledby="report-dialog-title">
+    <div class="report-dialog-header">
+      <h2 class="report-dialog-title" id="report-dialog-title">Transaction report</h2>
+      <div class="report-dialog-actions">
+        <button class="secondary-button" id="report-print" type="button" disabled>Export PDF</button>
+        <button class="report-close" id="report-close" type="button">Close</button>
+      </div>
+    </div>
+    <div class="report-loading" id="report-loading" role="status" hidden>Loading saved report…</div>
+    <div class="report-error" id="report-error" role="alert" hidden></div>
+    <article class="report-document" id="report-document" hidden>
+      <div class="report-brand">FraudGraph · Financial Intelligence</div>
+      <h2>Transaction analysis report</h2>
+      <p class="report-generated" id="report-generated"></p>
+      <p class="report-disclaimer">Research/demo inference only. This report is not a real financial decision, an adjudication, or a recommendation to approve or decline a payment.</p>
+      <div id="report-content"></div>
+      <p class="report-footer">FraudGraph research/demo inference · Stored transaction summary excludes raw card IDs, address IDs, device information, and feature vectors.</p>
+    </article>
+  </dialog>
 
   <script>
     (() => {
-      const results = {
-        auc: {
-          label: "ROC-AUC",
-          values: [0.826611, 0.830825, 0.907310, 0.871124]
-        },
-        ap: {
-          label: "Average Precision",
-          values: [0.410613, 0.426911, 0.523031, 0.485202]
-        },
-        p10r: {
-          label: "Precision at 10% Recall",
-          values: [0.884783, 0.896247, 0.933333, 0.959811]
-        }
-      };
-      const chart = document.querySelector("#metric-chart");
-      const buttons = document.querySelectorAll(".metric-tab");
-      const rows = chart.querySelectorAll(".chart-row");
+      "use strict";
 
-      buttons.forEach((button) => {
-        button.addEventListener("click", () => {
-          const metric = results[button.dataset.metric];
-          buttons.forEach((item) => item.setAttribute("aria-pressed", String(item === button)));
-          rows.forEach((row, index) => {
-            const value = metric.values[index];
-            row.querySelector(".chart-fill").style.setProperty("--value", `${value * 100}%`);
-            row.querySelector(".chart-value").textContent = value.toFixed(6);
+      const $ = (selector) => document.querySelector(selector);
+      const form = $("#analysis-form");
+      const analyzeButton = $("#analyze-button");
+      const requestError = $("#request-error");
+      const resultEmpty = $("#result-empty");
+      const resultData = $("#result-data");
+      const resultLoading = $("#result-loading");
+      const graphEmpty = $("#graph-empty");
+      const graphVisualization = $("#graph-visualization");
+      const healthButton = $("#health-check");
+      const apiError = $("#api-error");
+      const historyRows = $("#history-rows");
+      const historySearch = $("#history-search");
+      const historyDecision = $("#history-decision");
+      const historyState = { limit: 20, offset: 0, total: 0, totalSaved: 0, items: [], requestId: 0 };
+      const reportDialog = $("#report-dialog");
+      let historySearchTimer;
+      const counts = { total: 0, APPROVE: 0, FLAG: 0, DECLINE: 0 };
+      const fieldNames = ["TransactionAmt", "ProductCD", "card1", "addr1", "TransactionDT"];
+      const metricModels = [
+        {
+          name: "PureSAGE",
+          color: "#70a5ff",
+          metrics: { rocAuc: 0.8266112543, averagePrecision: 0.4106128246, precisionAt10Recall: 0.8847826087 }
+        },
+        {
+          name: "Hybrid GNN",
+          color: "#a38bfa",
+          metrics: { rocAuc: 0.8308247691, averagePrecision: 0.4269114713, precisionAt10Recall: 0.8962472406 }
+        },
+        {
+          name: "XGBoost",
+          color: "#64d5ae",
+          metrics: { rocAuc: 0.9073098871, averagePrecision: 0.5230309453, precisionAt10Recall: 0.9333333333 }
+        },
+        {
+          name: "XGBoost + GNN Stack",
+          color: "#eabe68",
+          metrics: { rocAuc: 0.8711239847, averagePrecision: 0.4852015354, precisionAt10Recall: 0.9598108747 }
+        }
+      ];
+      const metricCharts = [
+        { id: "chart-roc-auc", key: "rocAuc", label: "ROC-AUC" },
+        { id: "chart-average-precision", key: "averagePrecision", label: "Average Precision" },
+        { id: "chart-precision-at-10-recall", key: "precisionAt10Recall", label: "Precision at 10% Recall" }
+      ];
+      let healthController;
+      let currentGraphEvidence = null;
+      let graphResizeFrame;
+      const metricResizeObserver = "ResizeObserver" in window
+        ? new ResizeObserver((entries) => {
+          entries.forEach((entry) => renderMetricChart(entry.target));
+        })
+        : null;
+
+      function setHealth(state, title, detail) {
+        const dotClass = state === "ok" ? "ok" : state === "degraded" ? "degraded" : state === "error" ? "error" : "";
+        $("#api-health-dot").className = `health-dot ${dotClass}`;
+        $("#top-health-dot").className = `health-dot ${dotClass}`;
+        $("#sidebar-health-dot").className = `health-dot ${dotClass}`;
+        $("#api-status-title").textContent = title;
+        $("#api-status-detail").textContent = detail;
+        $("#top-health-label").textContent = title;
+        $("#sidebar-health-title").textContent = title;
+        $("#sidebar-health-copy").textContent = detail;
+      }
+
+      async function readJson(response) {
+        const body = await response.text();
+        let data;
+        try {
+          data = body ? JSON.parse(body) : {};
+        } catch {
+          throw new Error(`The server returned a non-JSON response (HTTP ${response.status}).`);
+        }
+        if (!response.ok) {
+          const detail = typeof data.detail === "string" ? data.detail : `Request failed with HTTP ${response.status}.`;
+          throw new Error(detail);
+        }
+        return data;
+      }
+
+      function historyQuery({ offset = historyState.offset, limit = historyState.limit, filtered = true } = {}) {
+        const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+        if (filtered && historySearch.value.trim()) params.set("search", historySearch.value.trim());
+        if (filtered && historyDecision.value) params.set("decision", historyDecision.value);
+        return params;
+      }
+
+      function setHistoryMessage(element, visible, message) {
+        element.textContent = message;
+        element.hidden = !visible;
+        element.classList.toggle("visible", visible);
+      }
+
+      const DEMO_STORAGE_KEY = "fraudgraph-static-demo-records-v1";
+
+      function readDemoRecords() {
+        try {
+          const value = JSON.parse(localStorage.getItem(DEMO_STORAGE_KEY) || "[]");
+          return Array.isArray(value) ? value.filter((item) => item && typeof item === "object") : [];
+        } catch {
+          return [];
+        }
+      }
+
+      function saveDemoRecords(records) {
+        localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify(records.slice(0, 500)));
+      }
+
+      function getFilteredDemoRecords() {
+        const search = historySearch.value.trim().toLowerCase();
+        const decision = historyDecision.value.toUpperCase();
+        return readDemoRecords()
+          .sort((a, b) => new Date(b.created_at_utc).getTime() - new Date(a.created_at_utc).getTime())
+          .filter((item) => {
+            const matchesDecision = !decision || String(item.decision).toUpperCase() === decision;
+            const searchable = [
+              item.transaction_id, item.product_category, item.transaction_amount,
+              item.decision, item.fraud_score
+            ].join(" ").toLowerCase();
+            return matchesDecision && (!search || searchable.includes(search));
           });
-          chart.setAttribute(
-            "aria-label",
-            `${metric.label} comparison: ${Array.from(rows, (row, index) => `${row.dataset.model} ${metric.values[index].toFixed(6)}`).join(", ")}`
+      }
+
+      function createDemoPrediction(payload) {
+        const amount = Math.max(0, Number(payload.TransactionAmt) || 0);
+        const product = String(payload.ProductCD || "unknown").toUpperCase();
+        const cardPresent = payload.card1 !== null && payload.card1 !== "";
+        const addressPresent = payload.addr1 !== null && payload.addr1 !== "";
+        const amountSignal = Math.min(amount / 2500, 0.42);
+        const productSignal = ({ C: 0.13, H: 0.09, R: 0.07, S: 0.04 })[product] || 0.06;
+        const missingSignal = (cardPresent ? 0 : 0.07) + (addressPresent ? 0 : 0.04);
+        const score = Math.max(0.02, Math.min(0.97, 0.10 + amountSignal + productSignal + missingSignal));
+        const decision = score < 0.35 ? "APPROVE" : score < 0.68 ? "FLAG" : "DECLINE";
+        const transactionId = payload.TransactionID || `DEMO-${Date.now()}`;
+        const reasons = [
+          {
+            factor: "Illustrative transaction amount signal",
+            edge_type: "on_device",
+            weight: Number(amountSignal.toFixed(3)),
+            evidence: {
+              device_idx: payload.DeviceInfo || "demo-device",
+              tx_count: 8,
+              fraud_count: amount >= 1000 ? 2 : 0,
+              fraud_rate: amount >= 1000 ? 0.25 : 0
+            }
+          },
+          {
+            factor: cardPresent ? "Card relationship example" : "Card identifier not supplied",
+            edge_type: "uses_card",
+            weight: Number((productSignal + (cardPresent ? 0 : 0.07)).toFixed(3)),
+            evidence: {
+              card_idx: payload.card1 || "demo-card",
+              unique_cards: 3,
+              fraud_count: amount >= 1000 ? 1 : 0,
+              lift: amount >= 1000 ? 1.4 : 1.0
+            }
+          }
+        ];
+        return {
+          id: String(Date.now()),
+          transaction_id: transactionId,
+          transaction_amount: amount,
+          product_category: product,
+          transaction_dt: payload.TransactionDT,
+          fraud_score: Number(score.toFixed(4)),
+          decision,
+          latency_ms: null,
+          created_at_utc: new Date().toISOString(),
+          top_reasons: reasons,
+          graph_evidence: reasons.map((reason) => ({
+            edge_type: reason.edge_type,
+            evidence: reason.evidence
+          })),
+          demo_mode: true
+        };
+      }
+
+      function formatHistoryDate(value) {
+        if (typeof value !== "string" && typeof value !== "number") return "—";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return String(value);
+        return new Intl.DateTimeFormat(undefined, {
+          year: "numeric", month: "short", day: "2-digit",
+          hour: "2-digit", minute: "2-digit", timeZoneName: "short"
+        }).format(date);
+      }
+
+      function formatHistoryAmount(value) {
+        return typeof value === "number" && Number.isFinite(value)
+          ? new Intl.NumberFormat(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)
+          : "—";
+      }
+
+      function makeHistoryCell(row, value) {
+        const cell = document.createElement("td");
+        cell.textContent = value;
+        row.append(cell);
+        return cell;
+      }
+
+      function renderHistoryRows(items) {
+        historyRows.replaceChildren();
+        items.forEach((item) => {
+          const row = document.createElement("tr");
+          makeHistoryCell(row, item.transaction_id == null ? "—" : String(item.transaction_id));
+          makeHistoryCell(row, typeof item.fraud_score === "number" && Number.isFinite(item.fraud_score)
+            ? `${(item.fraud_score * 100).toFixed(2)}%`
+            : "—");
+
+          const decisionCell = document.createElement("td");
+          const decision = document.createElement("span");
+          const decisionName = typeof item.decision === "string" ? item.decision.toUpperCase() : "";
+          decision.className = `history-decision ${["APPROVE", "FLAG", "DECLINE"].includes(decisionName) ? decisionName.toLowerCase() : ""}`;
+          decision.textContent = decisionName || "—";
+          decisionCell.append(decision);
+          row.append(decisionCell);
+
+          makeHistoryCell(row, formatHistoryAmount(item.transaction_amount));
+          makeHistoryCell(row, typeof item.latency_ms === "number" && Number.isFinite(item.latency_ms)
+            ? `${item.latency_ms.toFixed(2)} ms`
+            : "—");
+          makeHistoryCell(row, formatHistoryDate(item.created_at_utc));
+
+          const actionCell = document.createElement("td");
+          const viewButton = document.createElement("button");
+          viewButton.className = "history-report-button";
+          viewButton.type = "button";
+          viewButton.textContent = "View report";
+          viewButton.dataset.recordId = String(item.id);
+          viewButton.addEventListener("click", () => openHistoryReport(item.id));
+          actionCell.append(viewButton);
+          row.append(actionCell);
+          historyRows.append(row);
+        });
+      }
+
+      async function loadHistory() {
+        const loading = $("#history-loading");
+        const error = $("#history-error");
+        const empty = $("#history-empty");
+        const table = $("#history-table-wrap");
+        const refreshButton = $("#history-refresh");
+        refreshButton.disabled = true;
+        setHistoryMessage(loading, true, "Loading demo transactions saved in this browser…");
+        setHistoryMessage(error, false, "");
+        setHistoryMessage(empty, false, "");
+        table.hidden = true;
+
+        try {
+          const allRecords = getFilteredDemoRecords();
+          const page = allRecords.slice(historyState.offset, historyState.offset + historyState.limit);
+          const totalSaved = readDemoRecords().length;
+          historyState.items = page;
+          historyState.total = allRecords.length;
+          historyState.totalSaved = totalSaved;
+          $("#history-total").textContent = String(totalSaved);
+          renderHistoryRows(page);
+          const first = allRecords.length === 0 ? 0 : historyState.offset + 1;
+          const last = Math.min(historyState.offset + page.length, allRecords.length);
+          $("#history-page-summary").textContent = allRecords.length
+            ? `Showing ${first}–${last} of ${allRecords.length} matching demo records`
+            : "No matching demo records";
+          $("#history-previous").disabled = historyState.offset === 0;
+          $("#history-next").disabled = historyState.offset + historyState.limit >= allRecords.length;
+          $("#history-csv").disabled = allRecords.length === 0;
+          table.hidden = page.length === 0;
+          setHistoryMessage(empty, page.length === 0, allRecords.length === 0
+            ? "No demo records yet. Submit a transaction above to create one."
+            : "No records are available on this page.");
+          updateCounters();
+        } catch (errorValue) {
+          historyState.items = [];
+          historyRows.replaceChildren();
+          $("#history-total").textContent = "—";
+          $("#history-page-summary").textContent = "History unavailable";
+          $("#history-previous").disabled = true;
+          $("#history-next").disabled = true;
+          $("#history-csv").disabled = true;
+          setHistoryMessage(error, true, errorValue.message || "Browser-local demo history could not be loaded.");
+        } finally {
+          setHistoryMessage(loading, false, "");
+          refreshButton.disabled = false;
+        }
+      }
+
+      function csvCell(value) {
+        let safeValue = value == null ? "" : String(value);
+        if (/^[\s\uFEFF]*[=+\-@]/.test(safeValue)) safeValue = `'${safeValue}`;
+        return `"${safeValue.replaceAll('"', '""')}"`;
+      }
+
+      async function exportHistoryCsv() {
+        const button = $("#history-csv");
+        const records = getFilteredDemoRecords();
+        if (records.length === 0 || button.disabled) return;
+        button.disabled = true;
+        button.setAttribute("aria-busy", "true");
+        try {
+          const headers = ["Transaction ID", "Fraud probability", "Decision", "Amount", "Inference latency", "Analysis date", "Mode"];
+          const lines = [headers, ...records.map((item) => [
+            item.transaction_id,
+            typeof item.fraud_score === "number" ? `${(item.fraud_score * 100).toFixed(2)}%` : "",
+            item.decision,
+            typeof item.transaction_amount === "number" ? item.transaction_amount : "",
+            "Illustrative demo (no model inference)",
+            item.created_at_utc,
+            "Static demo"
+          ])].map((line) => line.map(csvCell).join(","));
+          const blob = new Blob(["\uFEFF", lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+          const url = URL.createObjectURL(blob);
+          const anchor = document.createElement("a");
+          anchor.href = url;
+          anchor.download = "fraudgraph-demo-transaction-history.csv";
+          document.body.append(anchor);
+          anchor.click();
+          anchor.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } catch (errorValue) {
+          setHistoryMessage($("#history-error"), true, errorValue.message || "CSV export failed.");
+        } finally {
+          button.removeAttribute("aria-busy");
+          button.disabled = getFilteredDemoRecords().length === 0;
+        }
+      }
+
+      function reportSection(container, title) {
+        const section = document.createElement("section");
+        section.className = "report-section";
+        const heading = document.createElement("h3");
+        heading.textContent = title;
+        section.append(heading);
+        container.append(section);
+        return section;
+      }
+
+      function reportFields(section, entries) {
+        const list = document.createElement("dl");
+        list.className = "report-fields";
+        entries.forEach(([label, value]) => {
+          const field = document.createElement("div");
+          field.className = "report-field";
+          const term = document.createElement("dt");
+          term.textContent = label;
+          const description = document.createElement("dd");
+          description.textContent = value == null || value === "" ? "—" : String(value);
+          field.append(term, description);
+          list.append(field);
+        });
+        section.append(list);
+      }
+
+      function renderReport(record) {
+        const content = $("#report-content");
+        content.replaceChildren();
+        $("#report-generated").textContent = `Report generated ${formatHistoryDate(new Date().toISOString())}`;
+
+        const summary = reportSection(content, "Transaction summary");
+        reportFields(summary, [
+          ["Record ID", record.id],
+          ["Transaction ID", record.transaction_id],
+          ["Transaction amount", formatHistoryAmount(record.transaction_amount)],
+          ["Product category", record.product_category],
+          ["Dataset transaction timestamp", record.transaction_dt],
+          ["Analysis timestamp (UTC)", record.created_at_utc]
+        ]);
+
+        const decision = typeof record.decision === "string" ? record.decision.toUpperCase() : "—";
+        const score = typeof record.fraud_score === "number" && Number.isFinite(record.fraud_score)
+          ? `${(record.fraud_score * 100).toFixed(2)}%`
+          : "—";
+        const inference = reportSection(content, "Inference result");
+        reportFields(inference, [
+          ["Fraud probability", score],
+          ["Decision", decision],
+          ["Inference latency", typeof record.latency_ms === "number" ? `${record.latency_ms.toFixed(2)} ms` : "—"]
+        ]);
+
+        const reasonsSection = reportSection(content, "Explanation factors");
+        const reasonsList = document.createElement("ul");
+        reasonsList.className = "report-reasons";
+        const reasons = Array.isArray(record.top_reasons) ? record.top_reasons : [];
+        reasons.forEach((reason) => {
+          if (!reason || typeof reason !== "object") return;
+          const item = document.createElement("li");
+          item.textContent = typeof reason.factor === "string" ? reason.factor : "Explanation factor";
+          const metadata = [reason.edge_type, typeof reason.weight === "number" ? `weight ${reason.weight}` : null]
+            .filter(Boolean).join(" · ");
+          if (metadata) {
+            const detail = document.createElement("span");
+            detail.className = "report-subtle";
+            detail.textContent = ` (${metadata})`;
+            item.append(detail);
+          }
+          reasonsList.append(item);
+        });
+        if (reasonsList.childElementCount === 0) {
+          const item = document.createElement("li");
+          item.textContent = "No explanation factors were stored for this record.";
+          reasonsList.append(item);
+        }
+        reasonsSection.append(reasonsList);
+
+        const evidenceSection = reportSection(content, "Graph relationship evidence");
+        const evidenceList = document.createElement("ul");
+        evidenceList.className = "report-evidence";
+        const graphEvidence = Array.isArray(record.graph_evidence) ? record.graph_evidence : [];
+        graphEvidence.forEach((relationship) => {
+          if (!relationship || typeof relationship !== "object") return;
+          const item = document.createElement("li");
+          const fields = relationship.evidence && typeof relationship.evidence === "object"
+            ? Object.entries(relationship.evidence)
+              .filter(([, value]) => value === null || ["string", "number", "boolean"].includes(typeof value))
+              .map(([key, value]) => `${key}: ${String(value)}`)
+            : [];
+          item.textContent = [relationship.edge_type, ...fields].filter(Boolean).join(" · ");
+          evidenceList.append(item);
+        });
+        if (evidenceList.childElementCount === 0) {
+          const item = document.createElement("li");
+          item.textContent = "No graph relationship evidence was stored for this record.";
+          evidenceList.append(item);
+        }
+        evidenceSection.append(evidenceList);
+        $("#report-document").hidden = false;
+        $("#report-print").disabled = false;
+      }
+
+      async function openHistoryReport(recordId) {
+        $("#report-loading").hidden = false;
+        $("#report-error").hidden = true;
+        $("#report-document").hidden = true;
+        $("#report-print").disabled = true;
+        if (!reportDialog.open) reportDialog.showModal();
+        try {
+          const record = readDemoRecords().find((item) => String(item.id) === String(recordId));
+          if (!record) throw new Error("This demo record is no longer available in this browser.");
+          renderReport(record);
+        } catch (errorValue) {
+          $("#report-error").textContent = errorValue.message || "The saved demo report could not be loaded.";
+          $("#report-error").hidden = false;
+        } finally {
+          $("#report-loading").hidden = true;
+        }
+      }
+
+      function closeReportDialog() {
+        if (reportDialog.open) reportDialog.close();
+        document.body.classList.remove("print-report");
+      }
+
+      function clearFieldErrors() {
+        fieldNames.forEach((name) => {
+          const input = form.elements.namedItem(name);
+          const error = $(`#${name}-error`);
+          if (input) input.removeAttribute("aria-invalid");
+          if (error) error.textContent = "";
+        });
+      }
+
+      function validateForm() {
+        clearFieldErrors();
+        let firstInvalid = null;
+        const errors = {};
+        const amount = form.elements.TransactionAmt;
+        const product = form.elements.ProductCD;
+        const timestamp = form.elements.TransactionDT;
+        const card = form.elements.card1;
+        const address = form.elements.addr1;
+
+        if (amount.value.trim() === "" || !Number.isFinite(Number(amount.value)) || Number(amount.value) < 0) {
+          errors.TransactionAmt = "Enter a valid amount of 0 or greater.";
+        }
+        if (!product.value.trim()) errors.ProductCD = "Product category is required.";
+        if (timestamp.value.trim() === "" || !Number.isFinite(Number(timestamp.value)) || Number(timestamp.value) < 0) {
+          errors.TransactionDT = "Enter a valid timestamp of 0 or greater.";
+        }
+        if (card.value.trim() !== "" && !/^[+-]?(?:\d+\.?\d*|\.\d+)$/.test(card.value.trim())) {
+          errors.card1 = "Card ID must be numeric, or left blank.";
+        }
+        if (address.value.trim() !== "" && !Number.isFinite(Number(address.value))) {
+          errors.addr1 = "Address ID must be numeric, or left blank.";
+        }
+
+        Object.entries(errors).forEach(([name, message]) => {
+          const input = form.elements.namedItem(name);
+          input.setAttribute("aria-invalid", "true");
+          $(`#${name}-error`).textContent = message;
+          if (!firstInvalid) firstInvalid = input;
+        });
+        if (firstInvalid) {
+          firstInvalid.focus();
+          return false;
+        }
+        return true;
+      }
+
+      function makePayload() {
+        const value = (name) => form.elements.namedItem(name).value.trim();
+        const card = value("card1");
+        const address = value("addr1");
+        const device = value("DeviceInfo");
+        const transactionId = value("TransactionID");
+        return {
+          TransactionAmt: Number(value("TransactionAmt")),
+          ProductCD: value("ProductCD"),
+          card1: card === "" ? null : card,
+          addr1: address === "" ? null : Number(address),
+          DeviceInfo: device === "" ? null : device,
+          TransactionDT: Number(value("TransactionDT")),
+          TransactionID: transactionId === "" ? null : transactionId
+        };
+      }
+
+      function addReason(list, reason, includeEvidence) {
+        const item = document.createElement("li");
+        item.className = "reason-item";
+        const factor = document.createElement("div");
+        factor.className = "reason-factor";
+        factor.textContent = typeof reason.factor === "string" ? reason.factor : "Explanation factor";
+        item.append(factor);
+
+        const chips = document.createElement("div");
+        chips.className = "reason-meta";
+        if (typeof reason.edge_type === "string" && reason.edge_type) {
+          const edge = document.createElement("span");
+          edge.className = "reason-chip edge";
+          edge.textContent = reason.edge_type;
+          chips.append(edge);
+        }
+        if (typeof reason.weight === "number" && Number.isFinite(reason.weight)) {
+          const weight = document.createElement("span");
+          weight.className = "reason-chip";
+          weight.textContent = `weight ${reason.weight}`;
+          chips.append(weight);
+        }
+        if (includeEvidence && reason.evidence && typeof reason.evidence === "object") {
+          Object.entries(reason.evidence).slice(0, 4).forEach(([key, value]) => {
+            if (value === null || typeof value === "object") return;
+            const evidence = document.createElement("span");
+            evidence.className = "reason-chip";
+            evidence.textContent = `${key}: ${String(value)}`;
+            chips.append(evidence);
+          });
+        }
+        if (chips.childElementCount) item.append(chips);
+        list.append(item);
+      }
+
+      function setGraphEmpty(title, message) {
+        currentGraphEvidence = null;
+        graphVisualization.replaceChildren();
+        graphVisualization.hidden = true;
+        $("#graph-empty-title").textContent = title;
+        $("#graph-empty-copy").textContent = message;
+        graphEmpty.hidden = false;
+      }
+
+      function createSvgElement(tag, attributes = {}) {
+        const element = document.createElementNS("http://www.w3.org/2000/svg", tag);
+        Object.entries(attributes).forEach(([name, value]) => element.setAttribute(name, String(value)));
+        return element;
+      }
+
+      function appendSvgText(parent, text, x, y, className, anchor) {
+        const element = createSvgElement("text", { x, y, class: className });
+        if (anchor) element.setAttribute("text-anchor", anchor);
+        element.textContent = text;
+        parent.append(element);
+        return element;
+      }
+
+      function renderMetricChart(container) {
+        const chart = metricCharts.find((item) => item.id === container.id);
+        if (!chart) return;
+
+        const compact = container.clientWidth < 560;
+        const width = compact ? 360 : 760;
+        const height = compact ? 248 : 185;
+        const barX = compact ? 8 : 200;
+        const barWidth = compact ? 344 : 420;
+        const valueX = compact ? 352 : 642;
+        const rowStart = compact ? 22 : 28;
+        const rowStep = compact ? 46 : 30;
+        const axisY = compact ? 197 : 139;
+        const svg = createSvgElement("svg", {
+          class: "metric-chart",
+          viewBox: `0 0 ${width} ${height}`,
+          role: "img",
+          "aria-labelledby": `${chart.id}-title ${chart.id}-description`
+        });
+        const title = createSvgElement("title", { id: `${chart.id}-title` });
+        title.textContent = `${chart.label} held-out test comparison`;
+        const description = createSvgElement("desc", { id: `${chart.id}-description` });
+        description.textContent = `Scale from 0 to 1. ${metricModels.map((model) =>
+          `${model.name}: ${model.metrics[chart.key].toFixed(10)}`
+        ).join(". ")}.`;
+        svg.append(title, description);
+
+        metricModels.forEach((model, index) => {
+          const value = model.metrics[chart.key];
+          const y = rowStart + index * rowStep;
+          appendSvgText(svg, model.name, compact ? 8 : 8, compact ? y : y + 3, "metric-chart-model");
+          if (compact) {
+            appendSvgText(svg, value.toFixed(10), valueX, y, "metric-chart-value", "end");
+          } else {
+            appendSvgText(svg, value.toFixed(10), valueX, y + 3, "metric-chart-value");
+          }
+          const barY = compact ? y + 7 : y - 5;
+          const visibleWidth = value * barWidth;
+          svg.append(createSvgElement("rect", {
+            x: barX, y: barY, width: barWidth, height: 10, rx: 4, class: "metric-chart-track"
+          }));
+          svg.append(createSvgElement("rect", {
+            x: barX, y: barY, width: visibleWidth, height: 10, rx: 4,
+            class: "metric-chart-bar", fill: model.color
+          }));
+        });
+
+        [0, 0.5, 1].forEach((tick) => {
+          const x = barX + tick * barWidth;
+          svg.append(createSvgElement("line", {
+            x1: x, y1: compact ? 14 : 16, x2: x, y2: axisY, class: "metric-chart-gridline"
+          }));
+          appendSvgText(
+            svg,
+            tick.toFixed(1),
+            x,
+            compact ? 219 : 159,
+            "metric-chart-tick",
+            tick === 0 ? "start" : tick === 1 ? "end" : "middle"
           );
         });
+        const axisLabel = createSvgElement("text", {
+          x: compact ? 180 : 410,
+          y: compact ? 241 : 180,
+          class: "metric-chart-tick",
+          "text-anchor": "middle"
+        });
+        axisLabel.textContent = "Scale (0–1)";
+        svg.append(axisLabel);
+        container.replaceChildren(svg);
+      }
+
+      function renderMetricCharts() {
+        metricCharts.forEach(({ id }) => {
+          const container = document.getElementById(id);
+          if (!container) return;
+          renderMetricChart(container);
+          if (metricResizeObserver) metricResizeObserver.observe(container);
+        });
+      }
+
+      function usableIdentifier(value) {
+        return (typeof value === "string" && value.trim() !== "")
+          || (typeof value === "number" && Number.isFinite(value));
+      }
+
+      function displayLabel(value, maxLength = 21) {
+        const text = String(value);
+        return text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text;
+      }
+
+      function collectGraphNodes(reasons) {
+        const nodes = new Map();
+        const definitions = [
+          { type: "device", evidenceKey: "device_idx", edgeType: "on_device" },
+          { type: "card", evidenceKey: "card_idx", edgeType: "uses_card" }
+        ];
+        reasons.forEach((reason) => {
+          if (!reason || typeof reason !== "object" || !reason.evidence || typeof reason.evidence !== "object") return;
+          definitions.forEach(({ type, evidenceKey, edgeType }) => {
+            const evidence = reason.evidence;
+            const identifier = evidence[evidenceKey];
+            if (!usableIdentifier(identifier) || reason.edge_type !== edgeType) return;
+            const key = `${type}:${String(identifier)}`;
+            if (!nodes.has(key)) {
+              nodes.set(key, { type, identifier, evidence: { ...evidence }, edgeType });
+            } else {
+              Object.assign(nodes.get(key).evidence, evidence);
+            }
+          });
+        });
+        return [...nodes.values()];
+      }
+
+      function drawGraphNode(svg, node, x, y, width, height) {
+        const group = createSvgElement("g", { class: `graph-node ${node.type}` });
+        const panel = createSvgElement("rect", {
+          x, y, width, height, rx: 12, class: `graph-node-card ${node.type}`
+        });
+        group.append(panel);
+        group.append(createSvgElement("circle", {
+          cx: x + 17, cy: y + 20, r: 4, class: `graph-node-accent ${node.type}`
+        }));
+
+        const title = createSvgElement("title");
+        const evidenceSummary = Object.entries(node.evidence)
+          .filter(([, value]) => value === null || typeof value !== "object")
+          .map(([key, value]) => `${key}: ${String(value)}`)
+          .join(", ");
+        title.textContent = `${node.type === "device" ? "Device" : "Card"} ${String(node.identifier)}${evidenceSummary ? `; ${evidenceSummary}` : ""}`;
+        group.append(title);
+
+        appendSvgText(group, node.type === "device" ? "DEVICE" : "CARD", x + 29, y + 24, "graph-node-title");
+        appendSvgText(group, `${node.type}_idx: ${displayLabel(node.identifier, 24)}`, x + 12, y + 45, "graph-node-id");
+
+        const detailKeys = ["tx_count", "fraud_count", "fraud_rate", "unique_cards", "lift"];
+        const values = detailKeys
+          .filter((key) => Object.hasOwn(node.evidence, key)
+            && node.evidence[key] !== null
+            && ["number", "string"].includes(typeof node.evidence[key]))
+          .map((key) => `${key}: ${displayLabel(node.evidence[key], 20)}`);
+        values.forEach((value, index) => {
+          appendSvgText(group, value, x + 12, y + 64 + index * 15, "graph-node-evidence");
+        });
+        svg.append(group);
+      }
+
+      function drawRelationship(svg, x1, y1, x2, y2, label) {
+        svg.append(createSvgElement("line", { x1, y1, x2, y2, class: "graph-edge" }));
+        const middleX = (x1 + x2) / 2;
+        const middleY = (y1 + y2) / 2 - 7;
+        const labelWidth = Math.max(50, label.length * 6 + 14);
+        svg.append(createSvgElement("rect", {
+          x: middleX - labelWidth / 2, y: middleY - 10, width: labelWidth, height: 17, rx: 5,
+          class: "graph-edge-label-bg"
+        }));
+        appendSvgText(svg, label, middleX, middleY + 2, "graph-edge-label", "middle");
+      }
+
+      function useCompactGraphLayout() {
+        return window.matchMedia("(max-width: 640px)").matches
+          || graphVisualization.parentElement.clientWidth < 560;
+      }
+
+      function renderRelationshipGraph(transactionId, reasons) {
+        const nodes = collectGraphNodes(reasons);
+        if (!usableIdentifier(transactionId) || nodes.length === 0) {
+          setGraphEmpty(
+            "No relationship evidence returned",
+            "This response did not include a device_idx or card_idx with its matching graph relationship. No connections are inferred."
+          );
+          return;
+        }
+        currentGraphEvidence = { transactionId, reasons };
+
+        const device = nodes.find((node) => node.type === "device");
+        const card = nodes.find((node) => node.type === "card");
+        const svg = createSvgElement("svg", {
+          class: "graph-svg graph-enter",
+          role: "img",
+          "aria-labelledby": "graph-svg-title graph-svg-description",
+          preserveAspectRatio: "xMidYMid meet"
+        });
+        const title = createSvgElement("title", { id: "graph-svg-title" });
+        title.textContent = `Relationship evidence for transaction ${String(transactionId)}`;
+        const description = createSvgElement("desc", { id: "graph-svg-description" });
+        description.textContent = `Transaction ${String(transactionId)} is connected only to the returned device and card evidence shown in this view.`;
+        svg.append(title, description);
+
+        const isCompact = useCompactGraphLayout();
+        if (isCompact) {
+          const hasBoth = Boolean(device && card);
+          const transactionY = hasBoth ? 230 : 250;
+          const viewHeight = hasBoth ? 470 : 340;
+          svg.setAttribute("viewBox", `0 0 300 ${viewHeight}`);
+
+          if (device) {
+            drawGraphNode(svg, device, 10, 12, 280, 140);
+            drawRelationship(svg, 150, 152, 150, transactionY - 46, device.edgeType);
+          } else if (card) {
+            drawGraphNode(svg, card, 10, 12, 280, 140);
+            drawRelationship(svg, 150, 152, 150, transactionY - 46, card.edgeType);
+          }
+
+          svg.append(createSvgElement("circle", {
+            cx: 150, cy: transactionY, r: 49, class: "graph-transaction-halo"
+          }));
+          svg.append(createSvgElement("circle", {
+            cx: 150, cy: transactionY, r: 40, class: "graph-transaction-node"
+          }));
+          const transactionTitle = createSvgElement("title");
+          transactionTitle.textContent = `Transaction ${String(transactionId)}`;
+          svg.append(transactionTitle);
+          appendSvgText(svg, "TRANSACTION", 150, transactionY - 3, "graph-transaction-label", "middle");
+          appendSvgText(svg, displayLabel(transactionId, 17), 150, transactionY + 14, "graph-transaction-id", "middle");
+
+          if (card && device) {
+            drawGraphNode(svg, card, 10, 328, 280, 140);
+            drawRelationship(svg, 150, transactionY + 46, 150, 328, card.edgeType);
+          }
+        } else {
+          svg.setAttribute("viewBox", "0 0 720 280");
+          if (device) {
+            drawGraphNode(svg, device, 16, 63, 224, 154);
+            drawRelationship(svg, 240, 140, 309, 140, device.edgeType);
+          }
+          if (card) {
+            drawGraphNode(svg, card, 480, 63, 224, 154);
+            drawRelationship(svg, 411, 140, 480, 140, card.edgeType);
+          }
+          svg.append(createSvgElement("circle", {
+            cx: 360, cy: 140, r: 53, class: "graph-transaction-halo"
+          }));
+          svg.append(createSvgElement("circle", {
+            cx: 360, cy: 140, r: 43, class: "graph-transaction-node"
+          }));
+          const transactionTitle = createSvgElement("title");
+          transactionTitle.textContent = `Transaction ${String(transactionId)}`;
+          svg.append(transactionTitle);
+          appendSvgText(svg, "TRANSACTION", 360, 137, "graph-transaction-label", "middle");
+          appendSvgText(svg, displayLabel(transactionId, 18), 360, 154, "graph-transaction-id", "middle");
+        }
+
+        graphVisualization.replaceChildren(svg);
+        graphVisualization.hidden = false;
+        graphEmpty.hidden = true;
+      }
+
+      function updateGraphLayout() {
+        if (!currentGraphEvidence || graphVisualization.hidden) return;
+        const svg = graphVisualization.querySelector("svg");
+        const compactView = svg && svg.getAttribute("viewBox").startsWith("0 0 300 ");
+        if (compactView !== useCompactGraphLayout()) {
+          renderRelationshipGraph(currentGraphEvidence.transactionId, currentGraphEvidence.reasons);
+        }
+      }
+
+      window.addEventListener("resize", () => {
+        cancelAnimationFrame(graphResizeFrame);
+        graphResizeFrame = requestAnimationFrame(updateGraphLayout);
       });
+      if ("ResizeObserver" in window) {
+        new ResizeObserver(updateGraphLayout).observe(graphVisualization.parentElement);
+      }
+
+      function renderResult(data) {
+        const score = data.fraud_score;
+        if (typeof score !== "number" || !Number.isFinite(score) || score < 0 || score > 1) {
+          throw new Error("The demo generated an invalid risk score.");
+        }
+        const decision = typeof data.decision === "string" ? data.decision.toUpperCase() : "";
+        if (!["APPROVE", "FLAG", "DECLINE"].includes(decision)) {
+          throw new Error("The demo generated an unrecognized decision.");
+        }
+
+        $("#result-score").textContent = `${(score * 100).toFixed(2)}%`;
+        const decisionElement = $("#result-decision");
+        decisionElement.textContent = decision;
+        decisionElement.className = `result-decision ${decision.toLowerCase()}`;
+        $("#result-transaction-id").textContent = data.transaction_id == null ? "—" : String(data.transaction_id);
+        $("#result-latency").textContent = typeof data.latency_ms === "number" && Number.isFinite(data.latency_ms)
+          ? `${data.latency_ms.toFixed(2)} ms`
+          : "Not provided";
+
+        const reasonList = $("#reason-list");
+        const relationshipList = $("#relationship-list");
+        reasonList.replaceChildren();
+        relationshipList.replaceChildren();
+        const reasons = Array.isArray(data.top_reasons)
+          ? data.top_reasons.filter((reason) => reason && typeof reason === "object" && !Array.isArray(reason))
+          : [];
+        reasons.forEach((reason) => {
+          addReason(reasonList, reason, false);
+        });
+        $("#reason-count").textContent = reasons.length ? `${reasons.length} returned` : "";
+        $("#reason-empty").hidden = reasonList.childElementCount !== 0;
+
+        const relationships = reasons.filter((reason) =>
+          typeof reason.edge_type === "string" && !["", "none", "self"].includes(reason.edge_type.toLowerCase())
+        );
+        relationships.forEach((reason) => addReason(relationshipList, reason, true));
+        $("#relationship-empty").hidden = relationshipList.childElementCount !== 0;
+        renderRelationshipGraph(data.transaction_id, reasons);
+
+        resultEmpty.hidden = true;
+        resultData.hidden = false;
+      }
+
+      function updateCounters() {
+        const records = readDemoRecords();
+        counts.total = records.length;
+        counts.APPROVE = records.filter((item) => item.decision === "APPROVE").length;
+        counts.FLAG = records.filter((item) => item.decision === "FLAG").length;
+        counts.DECLINE = records.filter((item) => item.decision === "DECLINE").length;
+        $("#count-total").textContent = String(counts.total);
+        $("#count-approve").textContent = String(counts.APPROVE);
+        $("#count-flag").textContent = String(counts.FLAG);
+        $("#count-decline").textContent = String(counts.DECLINE);
+      }
+
+      function setAnalyzing(isLoading) {
+        analyzeButton.disabled = isLoading;
+        analyzeButton.setAttribute("aria-busy", String(isLoading));
+        $(".button-label").textContent = isLoading ? "Analyzing…" : "Analyze transaction";
+        resultLoading.classList.toggle("visible", isLoading);
+        if (isLoading) {
+          resultEmpty.hidden = true;
+          resultData.hidden = true;
+          requestError.classList.remove("visible");
+          setGraphEmpty(
+            "Analysis in progress",
+            "Previous relationship evidence was cleared. Any available graph details will appear after a successful response."
+          );
+        }
+      }
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        requestError.classList.remove("visible");
+        if (!validateForm()) return;
+
+        setAnalyzing(true);
+        try {
+          const payload = makePayload();
+          const data = createDemoPrediction(payload);
+          const records = readDemoRecords();
+          records.unshift(data);
+          saveDemoRecords(records);
+          renderResult(data);
+          updateCounters();
+          await loadHistory();
+        } catch (error) {
+          resultData.hidden = true;
+          resultEmpty.hidden = false;
+          setGraphEmpty(
+            "Demo could not be saved",
+            "Your browser may have blocked local storage or reached its storage limit."
+          );
+          requestError.textContent = error.message || "The demo transaction could not be saved in this browser.";
+          requestError.classList.add("visible");
+        } finally {
+          setAnalyzing(false);
+        }
+      });
+
+      function checkHealth() {
+        setHealth("ok", "Demo mode", "Static interactive demo is running in your browser. No FastAPI backend or live ML inference is connected.");
+        apiError.classList.remove("visible");
+      }
+      healthButton.addEventListener("click", checkHealth);
+      $("#history-refresh").addEventListener("click", () => loadHistory());
+      $("#history-csv").addEventListener("click", exportHistoryCsv);
+      $("#history-search").addEventListener("input", () => {
+        clearTimeout(historySearchTimer);
+        historySearchTimer = setTimeout(() => {
+          historyState.offset = 0;
+          loadHistory();
+        }, 250);
+      });
+      $("#history-decision").addEventListener("change", () => {
+        historyState.offset = 0;
+        loadHistory();
+      });
+      $("#history-previous").addEventListener("click", () => {
+        historyState.offset = Math.max(0, historyState.offset - historyState.limit);
+        loadHistory();
+      });
+      $("#history-next").addEventListener("click", () => {
+        if (historyState.offset + historyState.limit < historyState.total) {
+          historyState.offset += historyState.limit;
+          loadHistory();
+        }
+      });
+      $("#report-close").addEventListener("click", closeReportDialog);
+      $("#report-print").addEventListener("click", () => {
+        if ($("#report-document").hidden) return;
+        document.body.classList.add("print-report");
+        window.print();
+      });
+      reportDialog.addEventListener("close", () => document.body.classList.remove("print-report"));
+      window.addEventListener("afterprint", () => document.body.classList.remove("print-report"));
+
+      const sidebar = $("#sidebar");
+      const menuToggle = $("#menu-toggle");
+      const scrim = $("#scrim");
+      function closeMenu() {
+        sidebar.classList.remove("open");
+        scrim.classList.remove("visible");
+        menuToggle.setAttribute("aria-expanded", "false");
+        menuToggle.setAttribute("aria-label", "Open navigation");
+      }
+      menuToggle.addEventListener("click", () => {
+        const willOpen = !sidebar.classList.contains("open");
+        sidebar.classList.toggle("open", willOpen);
+        scrim.classList.toggle("visible", willOpen);
+        menuToggle.setAttribute("aria-expanded", String(willOpen));
+        menuToggle.setAttribute("aria-label", willOpen ? "Close navigation" : "Open navigation");
+      });
+      scrim.addEventListener("click", closeMenu);
+      sidebar.querySelectorAll(".side-nav a, .brand").forEach((link) => link.addEventListener("click", closeMenu));
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") closeMenu();
+      });
+      sidebar.querySelectorAll(".side-nav a").forEach((link) => {
+        link.addEventListener("click", () => {
+          sidebar.querySelectorAll(".side-nav a").forEach((item) => item.removeAttribute("aria-current"));
+          link.setAttribute("aria-current", "page");
+        });
+      });
+      renderMetricCharts();
+      checkHealth();
+      updateCounters();
+      loadHistory();
     })();
   </script>
 </body>
